@@ -1,6 +1,6 @@
-# Project Name - Contributing Guidelines
+# GIO Data Platform- Contributing Guidelines
 
-Welcome to the **Project Name** repository! We appreciate your interest in contributing to our project. This README file serves as a guide to help you understand how you can contribute to our project effectively.
+Welcome to the GIO Data Platform repository! The place where you can contribute to the awesome work being done across the DEFRA Estate in regards to data platform and Infrastructure. We appreciate your interest in contributing to our project. This README file serves as a guide to help you understand how you can contribute to our project effectively.
 
 ## Table of Contents
 - [Project Description](#project-description)
