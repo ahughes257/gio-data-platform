@@ -3,7 +3,7 @@
 Welcome to the GIO Data Platform repository! The place where you can contribute to the awesome work being done across the DEFRA Estate in regards to data platform and Infrastructure. We appreciate your interest in contributing to our project. This README file serves as a guide to help you understand how you can contribute to our project effectively.
 
 ## Our Aim
-Our aim to stop repetititon and maximise reuse. Building a good engineering platform is hard and you do not want to take on that endeavour by yourself, Especially in the Enterprise, We believe that sharing and collaboration is the best way to deliver value to consumers. We want to code in the open, and we want to welcome openess and honesty.
+Our aim to stop repetititon and maximise reuse. Building a good engineering platform is hard and you do not want to take on that endeavour by yourself, Especially in the Enterprise, We believe that sharing and collaboration is the best way to deliver value to consumers. We want to code in the open, and we want to welcome openness and transparancy.
 
 We want to achieve this by automating as much as possible with the following core principles
 - Code in the open
