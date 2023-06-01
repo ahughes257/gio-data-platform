@@ -48,7 +48,7 @@ There are several ways you can contribute to this project:
 
 When making code contributions, please follow these guidelines:
 
-1. Fork the repository and create a new branch for your feature or bug fix.
+1. Fork the repository (If outside of the DEFRA Organisation) and create a new branch for your feature or bug fix.
 2. Ensure your code adheres to the project's coding standards and style guidelines.
 3. Write clear and concise commit messages.
 4. Test your changes thoroughly before submitting a pull request.
