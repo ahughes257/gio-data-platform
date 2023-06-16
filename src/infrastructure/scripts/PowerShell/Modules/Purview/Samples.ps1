@@ -3,7 +3,7 @@
 Import-Module "$PSScriptRoot..\Purview\Modules\PurviewModule.psm1" -force
  
 
-$baseUrl = "https://cap-defra-test.purview.azure.com"
+$baseUrl = "https://defra-test.purview.azure.com"
 
  
 
