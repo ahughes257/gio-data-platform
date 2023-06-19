@@ -185,7 +185,13 @@ function Add-PurviewPolicyRole {
         $dnfCondition = $permissionRule.dnfCondition | Where-Object { $_.fromRule -eq "purviewmetadatarole_builtin_$($RoleName):$CollectionName" }
        
         if ($dnfCondition) {
-            Write-Host "The specified condition exists in the attribute rule."
+             $existingGroupIds = $dnfCondition.attributeValueIncludedIn
+            if ($existingGroupIds -notcontains $GroupId) {
+                $dnfCondition.attributeValueIncludedIn += $GroupId
+                Write-Host "The GroupId has been added to the attribute rule."
+            } else {
+                Write-Host "The GroupId is already included in the attribute rule."
+            }
         } else {
             #CREATE THE DNF RULE
             $newCondition = [PSCustomObject]@{
@@ -197,26 +203,6 @@ function Add-PurviewPolicyRole {
             $permissionRule.dnfCondition += , @($newCondition)
 
             Write-Host "The specified condition has been added to the attribute rule."
-
-            #ADD THE NEW attribute as no dnf rule existed so must be a new one!
-            #  $newAttr = [PSCustomObject]@{
-            #     kind = "attributerule"
-            #     id = "purviewmetadatarole_builtin_$($RoleName):$CollectionName"
-            #     name = "purviewmetadatarole_builtin_$($RoleName):$CollectionName"
-            #     dnfCondition = @(
-            #         @(
-            #             @{
-            #                 fromRule = "purviewmetadatarole_builtin_$($RoleName)"
-            #                 attributeName = "derived.purview.role"
-            #                 attributeValueIncludes = "purviewmetadatarole_builtin_$($RoleName)"
-            #             },
-            #             @{
-            #                 attributeName = "principal.microsoft.groups"
-            #                 attributeValueIncludedIn = @($GroupId)
-            #             }
-            #         )
-            #     )
-            # }
 
             $dnfArray = @(
                 [PSCustomObject]@{
