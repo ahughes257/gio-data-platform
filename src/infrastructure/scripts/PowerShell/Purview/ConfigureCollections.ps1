@@ -28,7 +28,7 @@ foreach ($collection in $config.Collections)
     {      
       foreach($permissionGroup in $permission.GroupNames)   
       {
-        #You need to get the policy each time to avoid 409 conflicts
+        #You need to get the policy each time to avoid 409 conflicts as the policy is versioned
         $policy = Get-PurviewPolicyByCollectionName -AccessToken $AccessToken -CollectionName $collection.Name -ApiVersion '2021-07-01-preview' -BaseUri $baseUrl
         $policyId = $policy.values[0].id
         $groupObjectId = Get-AdGroupObjectId -GroupName $permissionGroup
@@ -38,4 +38,3 @@ foreach ($collection in $config.Collections)
       }
     }
 }
-
