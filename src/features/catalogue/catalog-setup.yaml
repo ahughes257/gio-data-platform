@@ -53,13 +53,6 @@ extends:
         deploymentBranches:
           - '*'
         serviceConnection: AZD-CPR-DEV1
-      - name: 'DP-TST'
-        azureRegions:
-          primary: uksouth
-        developmentEnvironment: false
-        deploymentBranches:
-          - '*'
-        serviceConnection: AZD-CPR-TST1
     scriptsList:   
      - displayName: 'Configure Collections and Permissions'
        scriptPath: 'GIO_Internal/scripts/PowerShell/Purview/ConfigureCollections.ps1'
