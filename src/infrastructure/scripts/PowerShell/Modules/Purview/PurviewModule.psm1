@@ -68,14 +68,19 @@ function New-PurviewCollection {
         [string]$BaseUri
     )
 
-    $url = "$($BaseUri)/collections/$($CollectionName)?api-version=$ApiVersion"
+    $systemInternalName = $CollectionName.Replace(" ","")
+
+    $url = "$($BaseUri)/account/collections/$($systemInternalName)?api-version=$ApiVersion"
 
     $json = @{
+        "name" = "systemInternalName"
         "parentCollection" = @{
+            "type" = "CollectionReference"
             "referenceName" = "$ParentCollectionName"
         }
+        "friendlyName" = $CollectionName
     }
-
+     
     Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'PUT' -Body $json
 }
 
@@ -168,8 +173,7 @@ function Add-PurviewPolicyRole {
         [string]$RoleName,
 
         [Parameter(Mandatory = $true)]
-        [string]$CollectionName
-       
+        [string]$CollectionName       
 
     )
 
@@ -177,21 +181,15 @@ function Add-PurviewPolicyRole {
 
     $updatedPolicy = $Policy
 
-
     $permissionRule = $updatedPolicy.properties.attributeRules | Where-Object { $_.id -eq "permission:$CollectionName" }
 
     if ($permissionRule) {
         # Check if the permission rule contains an entry with the specified fromRule value
-        $dnfCondition = $permissionRule.dnfCondition | Where-Object { $_.fromRule -eq "purviewmetadatarole_builtin_$($RoleName):$CollectionName" }
-       
-        if ($dnfCondition) {
-             $existingGroupIds = $dnfCondition.attributeValueIncludedIn
-            if ($existingGroupIds -notcontains $GroupId) {
-                $dnfCondition.attributeValueIncludedIn += $GroupId
-                Write-Host "The GroupId has been added to the attribute rule."
-            } else {
-                Write-Host "The GroupId is already included in the attribute rule."
-            }
+        $dnfCondition = $updatedPolicy.properties.attributeRules | Where-Object { $_.id -eq "purviewmetadatarole_builtin_$($RoleName):$CollectionName" }
+           
+        if ($dnfCondition) 
+        {           
+            $dnfCondition.dnfCondition[0][1].attributeValueIncludedIn += $GroupId
         } else {
             #CREATE THE DNF RULE
             $newCondition = [PSCustomObject]@{
