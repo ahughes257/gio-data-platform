@@ -46,7 +46,7 @@ extends:
       - /vars/common.yaml@GIO_Internal
       - /vars/{environment}.uksouth.yaml@GIO_Internal
     environments:
-      - name: 'DP-DEV'
+      - name: 'DP_DEV'
         azureRegions:
           primary: uksouth
         developmentEnvironment: true
