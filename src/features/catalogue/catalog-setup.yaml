@@ -46,14 +46,14 @@ extends:
       - /vars/common.yaml@GIO_Internal
       - /vars/{environment}.uksouth.yaml@GIO_Internal
     environments:
-      - name: 'dev1'
+      - name: 'DP-DEV'
         azureRegions:
           primary: uksouth
         developmentEnvironment: true
         deploymentBranches:
           - '*'
         serviceConnection: AZD-CPR-DEV1
-      - name: 'tst1'
+      - name: 'DP-TST'
         azureRegions:
           primary: uksouth
         developmentEnvironment: false
