@@ -43,8 +43,8 @@ extends:
   template: /templates/pipelines/common-scripts-deploy.yaml@PipelineCommon
   parameters:
     variableFiles:
-      - /Variables/common.yaml@GIO_Internal
-      - /Variables/{environment}.uksouth.yaml@GIO_Internal
+      - /vars/common.yaml@GIO_Internal
+      - /vars/{environment}.uksouth.yaml@GIO_Internal
     environments:
       - name: 'dev1'
         azureRegions:
