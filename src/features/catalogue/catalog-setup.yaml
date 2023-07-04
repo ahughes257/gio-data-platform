@@ -34,13 +34,17 @@ resources:
       name: DEFRA-DEVOPS-COMMON/Defra.Pipeline.Common
       type: git
       ref: refs/tags/Release-v5-latest
+    - repository: GIO_Internal
+      name: DEFRA-Common-Platform-Improvements/GIO_DATA_PLATFORM
+      type: git
+      ref: main
   
 extends:
   template: /templates/pipelines/common-scripts-deploy.yaml@PipelineCommon
   parameters:
     variableFiles:
-      - /Variables/common.yaml@self
-      - /Variables/{environment}.uksouth.yaml@self
+      - /Variables/common.yaml@GIO_Internal
+      - /Variables/{environment}.uksouth.yaml@GIO_Internal
     environments:
       - name: 'dev1'
         azureRegions:
@@ -58,6 +62,6 @@ extends:
         serviceConnection: AZD-CPR-TST1
     scriptsList:   
      - displayName: 'Configure Collections and Permissions'
-       scriptPath: 'DEFRA-CPR-PURVIEW/scripts/PowerShell/Purview/ConfigureCollections.ps1'
+       scriptPath: 'GIO_Internal/scripts/PowerShell/Purview/ConfigureCollections.ps1'
        type: AzurePowerShell
-       scriptArguments: '-ConfigFilePath "DEFRA-CPR-PURVIEW/SECURITY/Config/DEV/collectionSetup.json" -Environment $(scriptEnvironment) -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV1001"'
+       scriptArguments: '-ConfigFilePath "GIO_Internal/SECURITY/Config/DEV/collectionSetup.json" -Environment $(scriptEnvironment) -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV1001"'
