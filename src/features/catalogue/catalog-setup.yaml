@@ -1,0 +1,63 @@
+name: $(BuildID)
+
+parameters:
+  - name: whatIf
+    displayName: PowerShell WhatIf Comparison
+    type: boolean
+    default: true
+
+  - name: deploy
+    displayName: "Deployment"
+    type: boolean
+    default: false
+
+  - name: region
+    displayName: "Region"
+    type: string
+    default: uksouth
+    values:
+      - uksouth
+
+# PROJECT SPECIFIC (CHANGE ME ACCORDINGLY)
+trigger:
+  batch: true
+  branches:
+    include:
+      - master
+  paths:
+    include:
+      - DEFRA-CPR-PURVIEW/Security/*
+
+resources:
+  repositories:
+    - repository: PipelineCommon
+      name: DEFRA-DEVOPS-COMMON/Defra.Pipeline.Common
+      type: git
+      ref: refs/tags/Release-v5-latest
+  
+extends:
+  template: /templates/pipelines/common-scripts-deploy.yaml@PipelineCommon
+  parameters:
+    variableFiles:
+      - /Variables/common.yaml@self
+      - /Variables/{environment}.uksouth.yaml@self
+    environments:
+      - name: 'dev1'
+        azureRegions:
+          primary: uksouth
+        developmentEnvironment: true
+        deploymentBranches:
+          - '*'
+        serviceConnection: AZD-CPR-DEV1
+      - name: 'tst1'
+        azureRegions:
+          primary: uksouth
+        developmentEnvironment: false
+        deploymentBranches:
+          - '*'
+        serviceConnection: AZD-CPR-TST1
+    scriptsList:   
+     - displayName: 'Configure Collections and Permissions'
+       scriptPath: 'DEFRA-CPR-PURVIEW/scripts/PowerShell/Purview/ConfigureCollections.ps1'
+       type: AzurePowerShell
+       scriptArguments: '-ConfigFilePath "DEFRA-CPR-PURVIEW/SECURITY/Config/DEV/collectionSetup.json" -Environment $(scriptEnvironment) -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV1001"'
