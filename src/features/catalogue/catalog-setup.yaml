@@ -57,4 +57,4 @@ extends:
      - displayName: 'Configure Collections and Permissions'
        scriptPath: 'src/infrastructure/scripts/PowerShell/Purview/ConfigureCollections.ps1'
        type: AzurePowerShell
-       scriptArguments: '-ConfigFilePath "src/config/catalogue/$(scriptEnvironment)" -Environment $(scriptEnvironment) -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV1001"'
+       scriptArguments: '-ConfigFilePath "$(Pipeline.Workspace)/GIO_DATA_PLATFORM/src/config/catalogue/$(scriptEnvironment)" -Environment $(scriptEnvironment) -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV1001"'
