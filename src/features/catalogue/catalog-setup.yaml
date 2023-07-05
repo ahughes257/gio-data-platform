@@ -56,6 +56,6 @@ extends:
         serviceConnection: AZD-CPR-DEV1
     scriptsList:   
      - displayName: 'Configure Collections and Permissions'
-       scriptPath: '/gio-data-platform/src/infrastructure/scripts/PowerShell/Purview/ConfigureCollections.ps1'
+       scriptPath: 'gio-data-platform/src/infrastructure/scripts/PowerShell/Purview/ConfigureCollections.ps1'
        type: AzurePowerShell
-       scriptArguments: '-ConfigFilePath "/GIO_DATA_PLATFORM/src/config/catalogue/$(scriptEnvironment)" -Environment $(scriptEnvironment) -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV1001"'
+       scriptArguments: '-ConfigFilePath "GIO_DATA_PLATFORM/src/config/catalogue/$(scriptEnvironment)" -Environment $(scriptEnvironment) -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV1001"'
