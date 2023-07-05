@@ -42,9 +42,7 @@ resources:
   
 extends:
   template: /templates/pipelines/common-scripts-deploy.yaml@PipelineCommon
-  parameters:
-    additionalCheckoutRepos:
-      - GIO_DATA_PLATFORM
+  parameters:   
     variableFiles:
       - /vars/common.yaml@GIO_DATA_PLATFORM
       - /vars/{environment}.uksouth.yaml@GIO_DATA_PLATFORM
