@@ -30,10 +30,6 @@ trigger:
 
 resources:
   repositories:
-    - repository: GIO_DATA_PLATFORM
-      name: DEFRA-Common-Platform-Improvements/GIO_DATA_PLATFORM
-      type: git
-      ref: main
     - repository: PipelineCommon
       name: DEFRA-DEVOPS-COMMON/Defra.Pipeline.Common
       type: git
