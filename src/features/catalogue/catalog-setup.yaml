@@ -43,8 +43,8 @@ extends:
   template: /templates/pipelines/common-scripts-deploy.yaml@PipelineCommon
   parameters:
     variableFiles:
-      - /vars/common.yaml@self
-      - /vars/{environment}.uksouth.yaml@self
+      - /vars/common.yaml@GIO_DATA_PLATFORM
+      - /vars/{environment}.uksouth.yaml@GIO_DATA_PLATFORM
     environments:
       - name: 'DP_DEV'
         azureRegions:
