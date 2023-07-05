@@ -51,7 +51,8 @@ $AccessToken = (Get-AzAccessToken -Resource "https://purview.azure.net").Token
 #}
 
 foreach ($file in $jsonFiles) {
-  $config = Get-Content $file 
+  Write-Host $file.FullName
+  $config = Get-Content $file.FullName 
   $config = $config.Replace("__ENVIRONMENT__", $Environment) | ConvertFrom-Json
 
   foreach ($collection in $config.Collections) 
