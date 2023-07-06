@@ -39,6 +39,10 @@ resources:
       name: DEFRA-Common-Platform-Improvements/GIO_DATA_PLATFORM
       type: git
       ref: main
+    - repository: GIO_DATA_PLATFORM1
+      name: DEFRA-Common-Platform-Improvements/GIO_DATA_PLATFORM
+      type: git
+      ref: main
   
 extends:
   template: /templates/pipelines/common-scripts-deploy.yaml@PipelineCommon
