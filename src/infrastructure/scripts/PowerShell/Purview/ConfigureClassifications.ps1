@@ -19,7 +19,7 @@ Write-Host "Found" $jsonFiles.Length "files"
 
 foreach ($file in $jsonFiles) {
   Write-Host $file.FullName
-  $config = Get-Content $file.FullName 
+  $config = Get-Content $file.FullName | ConvertFrom-Json
 
 Write-Host $config
 
