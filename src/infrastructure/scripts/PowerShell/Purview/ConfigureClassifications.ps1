@@ -21,8 +21,11 @@ foreach ($file in $jsonFiles) {
   Write-Host $file.FullName
   $config = Get-Content $file.FullName 
 
+Write-Host $config
+
   foreach ($classification in $config.Classifications) 
   {      
+      Write-Host $classification
       New-Classification -AccessToken $AccessToken -ClassificationName $classification.Name -ClassificationDescription $classification.Description -ApiVersion '2019-11-01-preview' -BaseUri $baseUrl
   }
 }
