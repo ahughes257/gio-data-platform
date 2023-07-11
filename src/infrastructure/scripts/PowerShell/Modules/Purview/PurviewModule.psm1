@@ -234,3 +234,29 @@ function Add-PurviewPolicyRole {
 
     Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'PUT' -Body $updatedPolicy
 }
+
+function New-Classification {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$AccessToken,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ClassificationName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ClassificationDescription,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ApiVersion,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUri
+    )
+
+    $url = "$($BaseUri)/catalog/api/atlas/v2/types/typedefs?api-version=$ApiVersion"
+
+    $json = @{"classificationDefs":[{"name":$ClassificationName,"description":$ClassificationDescription}]}
+     
+    Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'PUT' -Body $json
+}
