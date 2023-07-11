@@ -60,7 +60,7 @@ extends:
        scriptPath: 'src/infrastructure/scripts/PowerShell/Purview/ConfigureCollections.ps1'
        type: AzurePowerShell
        scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/$(scriptEnvironment)/Collections" -Environment $(scriptEnvironment) -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV1001"'
-     - displayName: 'Configure Collections and Permissions'
+     - displayName: 'Configure CLassifications'
        scriptPath: 'src/infrastructure/scripts/PowerShell/Purview/ConfigureClassifications.ps1'
        type: AzurePowerShell
        scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/$(scriptEnvironment)/Classifications" -Environment $(scriptEnvironment) -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV1001"'       
