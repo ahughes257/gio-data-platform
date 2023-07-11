@@ -256,7 +256,14 @@ function New-Classification {
 
     $url = "$($BaseUri)/catalog/api/atlas/v2/types/typedefs?api-version=$ApiVersion"
 
-    $json = @{"classificationDefs":[{"name":$ClassificationName,"description":$ClassificationDescription}]}
+      $json = @{
+        classificationDefs = @(
+            @{
+                name = $ClassificationName
+                description = $ClassificationDescription
+            }
+        )
+    }
      
     Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'PUT' -Body $json
 }
