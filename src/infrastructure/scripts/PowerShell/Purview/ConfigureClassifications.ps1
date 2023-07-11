@@ -17,6 +17,8 @@ $AccessToken = (Get-AzAccessToken -Resource "https://purview.azure.net").Token
 
 Write-Host "Found" $jsonFiles.Length "files"
 
+Write-Host $AccessToken
+
 foreach ($file in $jsonFiles) {
   Write-Host $file.FullName
   $config = Get-Content $file.FullName | ConvertFrom-Json
