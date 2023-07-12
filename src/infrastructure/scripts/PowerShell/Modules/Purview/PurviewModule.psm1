@@ -267,3 +267,21 @@ function New-Classification {
      
     Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'POST' -Body $json
 }
+
+function Get-Classification {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$AccessToken,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ClassificationName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUri
+    )
+
+    $url = "$($BaseUri)/catalog/api/atlas/v2/types/classificationdef/name/$ClassificationName"
+     
+    Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'GET' -Body $json
+}
