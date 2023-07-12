@@ -28,8 +28,12 @@ Write-Host $config
   foreach ($classification in $config.Classifications) 
   {      
       Write-Host $classification.Name "----------" $classification.Description
-      
-      New-Classification -AccessToken $AccessToken -ClassificationName $classification.Name -ClassificationDescription $classification.Description -ApiVersion '2019-11-01-preview' -BaseUri $baseUrl
+
+      $existingClassification = Get-Classification -AccessToken $AccessToken -ClassificationName $classification.Name -BaseUri $baseUrl
+      if ($null -eq $existingClassification)
+      {
+          New-Classification -AccessToken $AccessToken -ClassificationName $classification.Name -ClassificationDescription $classification.Description -ApiVersion '2019-11-01-preview' -BaseUri $baseUrl
+      }
   }
 }
 
