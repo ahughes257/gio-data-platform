@@ -9,7 +9,7 @@ param (
     [string]$Environment
 )
 
-Import-Module $PSScriptRoot/../Modules/Purview/PurviewModule.psm1
+Import-Module $PSScriptRoot/../../Modules/Purview/PurviewModule.psm1
 #Import-Module $PSScriptRoot/../Modules/ActiveDirectory/UsersAndGroups/ADGroups.psm1
 
 $jsonFiles = Get-ChildItem -Path $ConfigFilePath -Filter "*.json" -Recurse
