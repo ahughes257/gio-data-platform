@@ -1,0 +1,1432 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"workspaceName": {
+			"type": "string",
+			"metadata": "Workspace name",
+			"defaultValue": "devudpinfas1012"
+		},
+		"sqlserver_generic_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'sqlserver_generic'"
+		},
+		"cosmosdb_generic_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "@{linkedService().CosmosDbName}"
+		},
+		"datalake_generic_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://@{linkedService().StorageAccountName}.dfs.core.windows.net"
+		},
+		"http_generic_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "@{linkedService().SourceBaseURL}"
+		}
+	},
+	"variables": {
+		"workspaceId": "[concat('Microsoft.Synapse/workspaces/', parameters('workspaceName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('workspaceName'), '/HealthCheckTest')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"description": "Generic health check test testing connectivity between synapse-dl-cosmosdb",
+				"activities": [
+					{
+						"name": "CopyToCosmosDb",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"sink": {
+								"type": "CosmosDbSqlApiSink",
+								"writeBehavior": "upsert",
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_ADLS_Blob_File_JSON",
+								"type": "DatasetReference",
+								"parameters": {
+									"ContainerName": {
+										"value": "@pipeline().parameters.ContainerName",
+										"type": "Expression"
+									},
+									"FolderPath": {
+										"value": "@pipeline().parameters.FolderPath",
+										"type": "Expression"
+									},
+									"FileName": {
+										"value": "@pipeline().parameters.FileName",
+										"type": "Expression"
+									},
+									"StorageAccountName": {
+										"value": "@pipeline().parameters.StorageAccountName",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_CDB_CONTAINER",
+								"type": "DatasetReference",
+								"parameters": {
+									"ContainerName": {
+										"value": "@pipeline().parameters.CosmosDbContainerName",
+										"type": "Expression"
+									},
+									"CosmosDbAccountName": {
+										"value": "@pipeline().parameters.CosmosDbAccountName",
+										"type": "Expression"
+									},
+									"CosmosDbName": {
+										"value": "@pipeline().parameters.CosmosDbName",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"parameters": {
+					"StorageAccountName": {
+						"type": "string"
+					},
+					"ContainerName": {
+						"type": "string"
+					},
+					"FolderPath": {
+						"type": "string"
+					},
+					"FileName": {
+						"type": "string"
+					},
+					"CosmosDbAccountName": {
+						"type": "string"
+					},
+					"CosmosDbName": {
+						"type": "string"
+					},
+					"CosmosDbContainerName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "Core"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/DS_ADLS_Blob_File_JSON')]",
+				"[concat(variables('workspaceId'), '/datasets/DS_CDB_CONTAINER')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/PL_RAW_CSV_Generic')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "CopyFileToRawArea",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".csv"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_ADLS_Blob_File",
+								"type": "DatasetReference",
+								"parameters": {
+									"ContainerName": {
+										"value": "@pipeline().parameters.ContainerName",
+										"type": "Expression"
+									},
+									"FolderPath": {
+										"value": "@pipeline().parameters.FolderPath",
+										"type": "Expression"
+									},
+									"FileName": {
+										"value": "@pipeline().parameters.FileName",
+										"type": "Expression"
+									},
+									"StorageAccountName": {
+										"value": "@pipeline().parameters.StorageAccountName",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_ADLS_Blob_File",
+								"type": "DatasetReference",
+								"parameters": {
+									"ContainerName": {
+										"value": "@pipeline().parameters.TargetContainerName",
+										"type": "Expression"
+									},
+									"FolderPath": {
+										"value": "@pipeline().parameters.TargetFolderPath",
+										"type": "Expression"
+									},
+									"FileName": {
+										"value": "@pipeline().parameters.TargetFileName",
+										"type": "Expression"
+									},
+									"StorageAccountName": {
+										"value": "@pipeline().parameters.TargetStorageAccountName",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"parameters": {
+					"StorageAccountName": {
+						"type": "string"
+					},
+					"ContainerName": {
+						"type": "string"
+					},
+					"FolderPath": {
+						"type": "string"
+					},
+					"FileName": {
+						"type": "string"
+					},
+					"TargetStorageAccountName": {
+						"type": "string"
+					},
+					"TargetContainerName": {
+						"type": "string"
+					},
+					"TargetFolderPath": {
+						"type": "string"
+					},
+					"TargetFileName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "Ingestion"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/DS_ADLS_Blob_File')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/PL_RAW_HTTP_Generic')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "LookupConfigurationFile",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"dataset": {
+								"referenceName": "DS_ADLS_Blob_File_JSON",
+								"type": "DatasetReference",
+								"parameters": {
+									"ContainerName": {
+										"value": "@pipeline().parameters.ConfigContainerName",
+										"type": "Expression"
+									},
+									"FolderPath": {
+										"value": "@pipeline().parameters.ConfigFolderPath",
+										"type": "Expression"
+									},
+									"FileName": {
+										"value": "@pipeline().parameters.ConfigFileName",
+										"type": "Expression"
+									},
+									"StorageAccountName": {
+										"value": "@pipeline().parameters.ConfigStorageAccountName",
+										"type": "Expression"
+									}
+								}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "ExecuteCopyForEveryRecord",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "LookupConfigurationFile",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('LookupConfigurationFile').output.value",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "CopyDataFromURL",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "DelimitedTextSource",
+											"storeSettings": {
+												"type": "HttpReadSettings",
+												"requestMethod": "GET",
+												"requestTimeout": ""
+											},
+											"formatSettings": {
+												"type": "DelimitedTextReadSettings"
+											}
+										},
+										"sink": {
+											"type": "DelimitedTextSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "DelimitedTextWriteSettings",
+												"quoteAllText": true,
+												"fileExtension": ".csv"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "DS_HTTP_Source",
+											"type": "DatasetReference",
+											"parameters": {
+												"SourceBaseURL": {
+													"value": "@item().SourceBaseURL",
+													"type": "Expression"
+												},
+												"SourceRelativeURL": {
+													"value": "@item().SourceRelativeURL",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "DS_ADLS_Blob_Folder",
+											"type": "DatasetReference",
+											"parameters": {
+												"ContainerName": {
+													"value": "@pipeline().parameters.TargetContainerName",
+													"type": "Expression"
+												},
+												"FolderPath": {
+													"value": "@pipeline().parameters.TargetFolderPath",
+													"type": "Expression"
+												},
+												"FileName": {
+													"value": "@item().TargetFileName",
+													"type": "Expression"
+												},
+												"StorageAccountName": {
+													"value": "@pipeline().parameters.TargetStorageAccountName",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"parameters": {
+					"ConfigStorageAccountName": {
+						"type": "string"
+					},
+					"ConfigContainerName": {
+						"type": "string"
+					},
+					"ConfigFolderPath": {
+						"type": "string"
+					},
+					"ConfigFileName": {
+						"type": "string"
+					},
+					"TargetStorageAccountName": {
+						"type": "string"
+					},
+					"TargetContainerName": {
+						"type": "string"
+					},
+					"TargetFolderPath": {
+						"type": "string"
+					},
+					"TargetFileName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "Ingestion"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/DS_ADLS_Blob_File_JSON')]",
+				"[concat(variables('workspaceId'), '/datasets/DS_HTTP_Source')]",
+				"[concat(variables('workspaceId'), '/datasets/DS_ADLS_Blob_Folder')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/PL_RAW_JSON_Generic')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "CopyFileToRawArea",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"sink": {
+								"type": "JsonSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "JsonWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_ADLS_Blob_File_JSON",
+								"type": "DatasetReference",
+								"parameters": {
+									"ContainerName": {
+										"value": "@pipeline().parameters.ContainerName",
+										"type": "Expression"
+									},
+									"FolderPath": {
+										"value": "@pipeline().parameters.FolderPath",
+										"type": "Expression"
+									},
+									"FileName": {
+										"value": "@pipeline().parameters.FileName",
+										"type": "Expression"
+									},
+									"StorageAccountName": {
+										"value": "@pipeline().parameters.StorageAccountName",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_ADLS_Blob_File_JSON",
+								"type": "DatasetReference",
+								"parameters": {
+									"ContainerName": {
+										"value": "@pipeline().parameters.TargetContainerName",
+										"type": "Expression"
+									},
+									"FolderPath": {
+										"value": "@pipeline().parameters.TargetFolderPath",
+										"type": "Expression"
+									},
+									"FileName": {
+										"value": "@pipeline().parameters.TargetFileName",
+										"type": "Expression"
+									},
+									"StorageAccountName": {
+										"value": "@pipeline().parameters.TargetStorageAccountName",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"parameters": {
+					"StorageAccountName": {
+						"type": "string"
+					},
+					"ContainerName": {
+						"type": "string"
+					},
+					"FolderPath": {
+						"type": "string"
+					},
+					"FileName": {
+						"type": "string"
+					},
+					"TargetStorageAccountName": {
+						"type": "string"
+					},
+					"TargetContainerName": {
+						"type": "string"
+					},
+					"TargetFolderPath": {
+						"type": "string"
+					},
+					"TargetFileName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "Ingestion"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/DS_ADLS_Blob_File_JSON')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/DS_ADLS_Blob_File')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "datalake_generic",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"StorageAccountName": {
+							"value": "@dataset().StorageAccountName",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"ContainerName": {
+						"type": "string"
+					},
+					"FolderPath": {
+						"type": "string"
+					},
+					"FileName": {
+						"type": "string"
+					},
+					"StorageAccountName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "Core"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().FileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().FolderPath",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().ContainerName",
+							"type": "Expression"
+						}
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/datalake_generic')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/DS_ADLS_Blob_File_JSON')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "datalake_generic",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"StorageAccountName": {
+							"value": "@dataset().StorageAccountName",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"ContainerName": {
+						"type": "string"
+					},
+					"FolderPath": {
+						"type": "string"
+					},
+					"FileName": {
+						"type": "string"
+					},
+					"StorageAccountName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "Core"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().FileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().FolderPath",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().ContainerName",
+							"type": "Expression"
+						}
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/datalake_generic')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/DS_ADLS_Blob_File_Xlsx')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "datalake_generic",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"StorageAccountName": {
+							"value": "@dataset().StorageAccountName",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"ContainerName": {
+						"type": "string"
+					},
+					"FolderPath": {
+						"type": "string"
+					},
+					"FileName": {
+						"type": "string"
+					},
+					"WorksheetName": {
+						"type": "string"
+					},
+					"StorageAccountName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "Core"
+				},
+				"annotations": [],
+				"type": "Excel",
+				"typeProperties": {
+					"sheetName": {
+						"value": "@dataset().WorksheetName",
+						"type": "Expression"
+					},
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().FileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().FolderPath",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().ContainerName",
+							"type": "Expression"
+						}
+					},
+					"firstRowAsHeader": true
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/datalake_generic')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/DS_ADLS_Blob_File_Xml')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "datalake_generic",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"StorageAccountName": {
+							"value": "@dataset().StorageAccountName",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"ContainerName": {
+						"type": "string"
+					},
+					"FolderPath": {
+						"type": "string"
+					},
+					"FileName": {
+						"type": "string"
+					},
+					"StorageAccountName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "Core"
+				},
+				"annotations": [],
+				"type": "Xml",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().FileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().FolderPath",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().ContainerName",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/datalake_generic')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/DS_ADLS_Blob_Folder')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "datalake_generic",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"StorageAccountName": {
+							"value": "@dataset().StorageAccountName",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"ContainerName": {
+						"type": "string"
+					},
+					"FolderPath": {
+						"type": "string"
+					},
+					"FileName": {
+						"type": "string"
+					},
+					"StorageAccountName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "Core"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@dataset().FolderPath",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().ContainerName",
+							"type": "Expression"
+						}
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/datalake_generic')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/DS_CDB_CONTAINER')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"description": "Generic dataset to get data from any cosmosdb container",
+				"linkedServiceName": {
+					"referenceName": "cosmosdb_generic",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"CosmosDbAccountName": {
+							"value": "@dataset().CosmosDbAccountName",
+							"type": "Expression"
+						},
+						"CosmosDbName": {
+							"value": "@dataset().CosmosDbName",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"ContainerName": {
+						"type": "string"
+					},
+					"CosmosDbAccountName": {
+						"type": "string"
+					},
+					"CosmosDbName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "Core"
+				},
+				"annotations": [],
+				"type": "CosmosDbSqlApiCollection",
+				"schema": {},
+				"typeProperties": {
+					"collectionName": {
+						"value": "@dataset().ContainerName",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/cosmosdb_generic')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/DS_HTTP_Source')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "http_generic",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"SourceBaseURL": {
+							"value": "@dataset().SourceBaseURL",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"SourceBaseURL": {
+						"type": "string"
+					},
+					"SourceRelativeURL": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "HttpServerLocation",
+						"relativeUrl": {
+							"value": "@dataset().SourceRelativeURL",
+							"type": "Expression"
+						}
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/http_generic')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/cosmosdb_generic')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"description": "Generic Cosmos Db connection",
+				"parameters": {
+					"CosmosDbAccountName": {
+						"type": "String"
+					},
+					"CosmosDbName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "CosmosDb",
+				"typeProperties": {
+					"accountEndpoint": "https://@{linkedService().CosmosDbAccountName}.documents.azure.com:443/",
+					"database": "[parameters('cosmosdb_generic_properties_typeProperties_database')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/datalake_generic')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"description": "Generic Data Lake Connection",
+				"parameters": {
+					"StorageAccountName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('datalake_generic_properties_typeProperties_url')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/http_generic')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"parameters": {
+					"SourceBaseURL": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "HttpServer",
+				"typeProperties": {
+					"url": "[parameters('http_generic_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": true,
+					"authenticationType": "Anonymous"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/sqlserver_generic')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"description": "Generic SQL Synapse connection",
+				"parameters": {
+					"DBName": {
+						"type": "String"
+					},
+					"SqlServerName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlDW",
+				"typeProperties": {
+					"connectionString": "[parameters('sqlserver_generic_connectionString')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/AutoResolveIntegrationRuntime')]",
+			"type": "Microsoft.Synapse/workspaces/integrationRuntimes",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "Managed",
+				"typeProperties": {
+					"computeProperties": {
+						"location": "AutoResolve",
+						"dataFlowProperties": {
+							"computeType": "General",
+							"coreCount": 8,
+							"timeToLive": 0
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/IntegrationRuntimeUdp')]",
+			"type": "Microsoft.Synapse/workspaces/integrationRuntimes",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "Managed",
+				"description": "Main integration runtime to be used by UDP pipelines.",
+				"typeProperties": {
+					"computeProperties": {
+						"location": "AutoResolve",
+						"dataFlowProperties": {
+							"computeType": "General",
+							"coreCount": 8,
+							"timeToLive": 30,
+							"cleanup": false
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/DF_Audit_Deletions_Delta_JSON')]",
+			"type": "Microsoft.Synapse/workspaces/dataflows",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"description": "For Delta Lake implementations to handle soft delete when records are removed\nDemo change",
+				"folder": {
+					"name": "Core/Audit/JSON"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "DS_ADLS_Blob_File_JSON",
+								"type": "DatasetReference"
+							},
+							"name": "GenericInput"
+						},
+						{
+							"linkedService": {
+								"referenceName": "datalake_generic",
+								"type": "LinkedServiceReference"
+							},
+							"name": "ExistingDimensionTable"
+						}
+					],
+					"sinks": [
+						{
+							"linkedService": {
+								"referenceName": "datalake_generic",
+								"type": "LinkedServiceReference"
+							},
+							"name": "MarkAsInactive"
+						}
+					],
+					"transformations": [
+						{
+							"name": "AddHashInput"
+						},
+						{
+							"name": "AddHashExisting"
+						},
+						{
+							"name": "GetMaxSurrogateKey"
+						},
+						{
+							"name": "FilterForUpdatedValues"
+						},
+						{
+							"name": "UpdateObsolete"
+						},
+						{
+							"name": "MarkAsUpdate"
+						},
+						{
+							"name": "FilterForActive"
+						},
+						{
+							"name": "RemoveAllSpacesAndCharactersFromColNames"
+						}
+					],
+					"script": "parameters{\n\tPrimaryKey as string,\n\tRecordId as string,\n\tDeltaFolder as string,\n\tColumnsToAudit as string,\n\tPipelineRunId as string\n}\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tdocumentForm: 'documentPerLine') ~> GenericInput\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'delta',\n\tfileSystem: 'defraanalyticsdata',\n\tfolderPath: ($DeltaFolder)) ~> ExistingDimensionTable\nRemoveAllSpacesAndCharactersFromColNames derive(BusinessKeyHash = toString(crc32(byNames(split($PrimaryKey,'||')))),\n\t\tRowKeyHash = toString(byName($ColumnsToAudit))) ~> AddHashInput\nFilterForActive derive(BusinessKeyHash = toString(byName('BusinessKeyHash'))) ~> AddHashExisting\nAddHashExisting aggregate(MaxSurrogateKey = max(toInteger(byName(\"ItemKey\")))) ~> GetMaxSurrogateKey\nAddHashExisting, AddHashInput exists(AddHashExisting@BusinessKeyHash == AddHashInput@BusinessKeyHash,\n\tnegate:true,\n\tbroadcast: 'auto')~> FilterForUpdatedValues\nFilterForUpdatedValues derive(Active = 0,\n\t\tActiveEndTime = currentUTC(),\n\t\tRecordId = toString(byName($RecordId)),\n\t\tLastModifiedOn = currentUTC(),\n\t\tPipelineRunIdModifiedBy = $PipelineRunId) ~> UpdateObsolete\nUpdateObsolete alterRow(updateIf(true())) ~> MarkAsUpdate\nExistingDimensionTable filter(toInteger(byName('Active')) == 1) ~> FilterForActive\nGenericInput select(mapColumn(\n\t\teach(match(true()),\n\t\t\tregexReplace($$,\"[-',;:() _]\",\"\") = $$)\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> RemoveAllSpacesAndCharactersFromColNames\nMarkAsUpdate sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'delta',\n\tfileSystem: 'defraanalyticsdata',\n\tfolderPath: ($DeltaFolder),\n\tmergeSchema: false,\n\tautoCompact: false,\n\toptimizedWrite: false,\n\tvacuum: 0,\n\tdeletable:false,\n\tinsertable:false,\n\tupdateable:true,\n\tupsertable:false,\n\tkeys:['RecordId'],\n\tumask: 0022,\n\tpreCommands: [],\n\tpostCommands: [],\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\tmapColumn(\n\t\tActive,\n\t\tActiveEndTime,\n\t\tRecordId,\n\t\tLastModifiedOn,\n\t\tPipelineRunIdModifiedBy\n\t)) ~> MarkAsInactive"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/DS_ADLS_Blob_File_JSON')]",
+				"[concat(variables('workspaceId'), '/linkedServices/datalake_generic')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/DF_Audit_Delta_JSON')]",
+			"type": "Microsoft.Synapse/workspaces/dataflows",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"description": "For Delta Lake implementations",
+				"folder": {
+					"name": "Core/Audit/JSON"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "DS_ADLS_Blob_File_JSON",
+								"type": "DatasetReference"
+							},
+							"name": "GenericInput"
+						},
+						{
+							"linkedService": {
+								"referenceName": "datalake_generic",
+								"type": "LinkedServiceReference"
+							},
+							"name": "ExistingDimensionTable"
+						}
+					],
+					"sinks": [
+						{
+							"linkedService": {
+								"referenceName": "datalake_generic",
+								"type": "LinkedServiceReference"
+							},
+							"name": "DeltaUpdate"
+						},
+						{
+							"linkedService": {
+								"referenceName": "datalake_generic",
+								"type": "LinkedServiceReference"
+							},
+							"name": "DeltaInsert"
+						}
+					],
+					"transformations": [
+						{
+							"name": "NewAndUpdatedRows"
+						},
+						{
+							"name": "AddHashInput"
+						},
+						{
+							"name": "AddHashExisting"
+						},
+						{
+							"name": "GetMaxSurrogateKey"
+						},
+						{
+							"name": "AddKey"
+						},
+						{
+							"name": "JoinWithMaxSurrogateKey"
+						},
+						{
+							"name": "AddDimensionColumns"
+						},
+						{
+							"name": "FilterForUpdatedValues"
+						},
+						{
+							"name": "UpdateObsolete"
+						},
+						{
+							"name": "DropUnwantedColsInput"
+						},
+						{
+							"name": "UnionAllData"
+						},
+						{
+							"name": "MarkAsUpdate"
+						},
+						{
+							"name": "DropUnwantedColumns"
+						},
+						{
+							"name": "MarkAsInsert"
+						},
+						{
+							"name": "FilterForActive"
+						},
+						{
+							"name": "ConditionalSplit1"
+						},
+						{
+							"name": "BringForwardRecords"
+						},
+						{
+							"name": "DerivedColumn1"
+						},
+						{
+							"name": "RemoveAllSpacesAndCharactersFromColNames"
+						},
+						{
+							"name": "AddRecordId"
+						}
+					],
+					"script": "parameters{\n\tPrimaryKey as string,\n\tColumnsToCompare as string,\n\tRecordId as string,\n\tDeltaFolder as string,\n\tPipelineRunId as string,\n\tSource as string\n}\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tdocumentForm: 'documentPerLine') ~> GenericInput\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tformat: 'delta',\n\tfileSystem: 'defraanalyticsdata',\n\tfolderPath: ($DeltaFolder)) ~> ExistingDimensionTable\nAddHashInput, AddHashExisting exists(AddHashInput@BusinessKeyHash == AddHashExisting@BusinessKeyHash\n\t&& AddHashInput@RowKeyHash == AddHashExisting@RowKeyHash,\n\tnegate:true,\n\tbroadcast: 'auto')~> NewAndUpdatedRows\nRemoveAllSpacesAndCharactersFromColNames derive(BusinessKeyHash = toString(crc32(byNames(split($PrimaryKey,'||')))),\n\t\tRowKeyHash = toString(crc32(byNames(split($ColumnsToCompare,'||'))))) ~> AddHashInput\nFilterForActive derive(BusinessKeyHash = toString(byName('BusinessKeyHash')),\n\t\tRowKeyHash = toString(byName('RowKeyHash'))) ~> AddHashExisting\nAddHashExisting aggregate(MaxSurrogateKey = max(toInteger(byName(\"ItemKey\")))) ~> GetMaxSurrogateKey\nNewAndUpdatedRows keyGenerate(output(ItemKey as long),\n\tstartAt: 1L) ~> AddKey\nAddKey, GetMaxSurrogateKey join(ItemKey == MaxSurrogateKey || true(),\n\tjoinType:'cross',\n\tbroadcast: 'right')~> JoinWithMaxSurrogateKey\nJoinWithMaxSurrogateKey derive(Key = ItemKey + MaxSurrogateKey,\n\t\tActive = 1,\n\t\tActiveStartTime = currentUTC(),\n\t\tActiveEndTime = addMonths(currentUTC(),1200),\n\t\tLastModifiedOn = currentUTC(),\n\t\tCreatedOn = currentUTC(),\n\t\tPipelineRunId = $PipelineRunId,\n\t\tSource = $Source,\n\t\tPipelineRunIdModifiedBy = $PipelineRunId) ~> AddDimensionColumns\nAddHashExisting, NewAndUpdatedRows exists(AddHashExisting@BusinessKeyHash == AddHashInput@BusinessKeyHash,\n\tnegate:false,\n\tbroadcast: 'auto')~> FilterForUpdatedValues\nFilterForUpdatedValues derive(Active = 0,\n\t\tActiveEndTime = currentUTC(),\n\t\tLastModifiedOn = currentUTC(),\n\t\tPipelineRunIdModifiedBy = $PipelineRunId) ~> UpdateObsolete\nAddDimensionColumns select(mapColumn(\n\t\teach(match(!in(['MaxSurrogateKey','ItemKey','Key'],name)))\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> DropUnwantedColsInput\nMarkAsInsert, DropUnwantedColumns union(byName: true)~> UnionAllData\nUpdateObsolete alterRow(updateIf(true())) ~> MarkAsUpdate\nMarkAsUpdate select(mapColumn(\n\t\teach(match(!in(['BusinessKeyHash','RowKeyHash','MaxSurrogateKey','ItemKey','Key'],name)))\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> DropUnwantedColumns\nDropUnwantedColsInput alterRow(insertIf(true())) ~> MarkAsInsert\nExistingDimensionTable filter(toInteger(byName('Active')) == 1) ~> FilterForActive\nUnionAllData split(isUpdate(),\n\tdisjoint: true) ~> ConditionalSplit1@(update, insert)\nConditionalSplit1@update select(skipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> BringForwardRecords\nBringForwardRecords derive(BusinessKeyHash = toString(byName($PrimaryKey)),\n\t\tRecordId = toString(byName($RecordId))) ~> DerivedColumn1\nGenericInput select(mapColumn(\n\t\teach(match(true()),\n\t\t\tregexReplace($$,\"[-',;:() _]\",\"\") = $$)\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> RemoveAllSpacesAndCharactersFromColNames\nConditionalSplit1@insert derive(RecordId = uuid()) ~> AddRecordId\nDerivedColumn1 sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'delta',\n\tfileSystem: 'defraanalyticsdata',\n\tfolderPath: ($DeltaFolder),\n\tmergeSchema: true,\n\tautoCompact: false,\n\toptimizedWrite: false,\n\tvacuum: 0,\n\tdeletable:false,\n\tinsertable:false,\n\tupdateable:true,\n\tupsertable:false,\n\tkeys:['RecordId'],\n\tumask: 0022,\n\tpreCommands: [],\n\tpostCommands: [],\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\tsaveOrder: 1,\n\tmapColumn(\n\t\tActive,\n\t\tActiveStartTime,\n\t\tActiveEndTime,\n\t\tLastModifiedOn,\n\t\tCreatedOn,\n\t\tRecordId,\n\t\tPipelineRunIdModifiedBy\n\t)) ~> DeltaUpdate\nAddRecordId sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'delta',\n\tfileSystem: 'defraanalyticsdata',\n\tfolderPath: ($DeltaFolder),\n\tmergeSchema: true,\n\tautoCompact: false,\n\toptimizedWrite: false,\n\tvacuum: 0,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tumask: 0022,\n\tpreCommands: [],\n\tpostCommands: [],\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> DeltaInsert"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/DS_ADLS_Blob_File_JSON')]",
+				"[concat(variables('workspaceId'), '/linkedServices/datalake_generic')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/DF_Initialise_Delta_JSON')]",
+			"type": "Microsoft.Synapse/workspaces/dataflows",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"description": "First time load of Delta",
+				"folder": {
+					"name": "Core/Audit/JSON"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "DS_ADLS_Blob_File_JSON",
+								"type": "DatasetReference"
+							},
+							"name": "GetDataFromCleansedFile"
+						}
+					],
+					"sinks": [
+						{
+							"linkedService": {
+								"referenceName": "datalake_generic",
+								"type": "LinkedServiceReference"
+							},
+							"name": "WriteToDeltaStore"
+						}
+					],
+					"transformations": [
+						{
+							"name": "AddMetaData"
+						},
+						{
+							"name": "ReplaceInvalidColumnNames"
+						},
+						{
+							"name": "SelectAllColumnsToInsert"
+						},
+						{
+							"name": "MarkAsInsert"
+						}
+					],
+					"script": "parameters{\n\tPrimaryKey as string,\n\tDeltaFolder as string,\n\tContainerName as string,\n\tColumnsToAudit as string,\n\tPipelineRunId as string,\n\tSource as string\n}\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tdocumentForm: 'documentPerLine') ~> GetDataFromCleansedFile\nReplaceInvalidColumnNames derive(BusinessKeyHash = toString(crc32(byNames(split($PrimaryKey,'||')))),\n\t\tRowKeyHash = toString(crc32(byNames(split($ColumnsToAudit,'||')))),\n\t\tActive = 1,\n\t\tActiveStartTime = currentUTC(),\n\t\tRecordId = uuid(),\n\t\tActiveEndTime = addMonths(currentUTC(),1200),\n\t\tCreatedOn = currentUTC(),\n\t\tLastModifiedOn = currentUTC(),\n\t\tSource = $Source,\n\t\tPipelineRunId = $PipelineRunId,\n\t\tPipelineRunIdModifiedBy = $PipelineRunId) ~> AddMetaData\nGetDataFromCleansedFile select(mapColumn(\n\t\teach(match(true()),\n\t\t\tregexReplace($$,\"[-',;:() _]\",\"\") = $$)\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> ReplaceInvalidColumnNames\nAddMetaData select(skipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectAllColumnsToInsert\nSelectAllColumnsToInsert alterRow(insertIf(true())) ~> MarkAsInsert\nMarkAsInsert sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'delta',\n\tfileSystem: ($ContainerName),\n\tfolderPath: ($DeltaFolder),\n\tmergeSchema: false,\n\tautoCompact: false,\n\toptimizedWrite: false,\n\tvacuum: 0,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tumask: 0022,\n\tpreCommands: [],\n\tpostCommands: [],\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> WriteToDeltaStore"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/DS_ADLS_Blob_File_JSON')]",
+				"[concat(variables('workspaceId'), '/linkedServices/datalake_generic')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/WorkspaceSystemIdentity')]",
+			"type": "Microsoft.Synapse/workspaces/credentials",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "ManagedIdentity",
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/sparkpool')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": 120
+				},
+				"autoScale": {
+					"enabled": false,
+					"maxNodeCount": 3,
+					"minNodeCount": 1
+				},
+				"nodeCount": 3,
+				"nodeSize": "Small",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "3.1",
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": true,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "northeurope"
+		}
+	]
+}
