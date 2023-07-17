@@ -18,7 +18,6 @@ parameters:
     values:
       - uksouth
 
-# PROJECT SPECIFIC (CHANGE ME ACCORDINGLY)
 trigger:
   batch: true
   branches:
@@ -27,6 +26,9 @@ trigger:
   paths:
     include:
       - DEFRA-CPR-PURVIEW/Security/*
+
+pr:
+- main
 
 resources:
   repositories:
@@ -54,12 +56,30 @@ extends:
         deploymentBranches:
           - '*'
         serviceConnection: AZD-CPR-DEV1
+      - name: 'DP_TST'
+        azureRegions:
+          primary: uksouth
+        deploymentBranches:
+          - '*'
+        serviceConnection: AZD-CPR-TST1
+      - name: 'DP_PRE'
+        azureRegions:
+          primary: uksouth
+        deploymentBranches:
+          - '*'
+        serviceConnection: AZR-CPR-PRE1
+      - name: 'DP_PRD'
+        azureRegions:
+          primary: uksouth
+        deploymentBranches:
+          - '*'
+        serviceConnection: AZR-CPR-PRD1
     scriptsList:   
      - displayName: 'Configure Collections and Permissions'
        scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureCollections.ps1'
        type: AzurePowerShell
        scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/$(scriptEnvironment)/Collections" -Environment $(scriptEnvironment) -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV1001"'
-     - displayName: 'Configure Classifications'
-       scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureClassifications.ps1'
-       type: AzurePowerShell
-       scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/$(scriptEnvironment)/Classifications" -Environment $(scriptEnvironment) -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV1001"'       
+    # - displayName: 'Configure Classifications'
+    #   scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureClassifications.ps1'
+    #   type: AzurePowerShell
+    #   scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/$(scriptEnvironment)/Classifications" -Environment $(scriptEnvironment) -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV1001"'       

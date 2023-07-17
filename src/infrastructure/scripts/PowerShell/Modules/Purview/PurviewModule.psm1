@@ -49,6 +49,27 @@ function Get-PurviewCollections {
     Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url
 }
 
+function Get-PurviewCollectionByName {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$AccessToken,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ApiVersion,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUri,
+
+        [Parameter(Mandatory = $true)]
+        [string]$CollectionName
+    )
+
+    $url = "$($BaseUri)/account/collections/$CollectionName?api-version=$ApiVersion"
+   
+    Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url
+}
+
 function New-PurviewCollection {
     [CmdletBinding()]
     param (
@@ -68,9 +89,11 @@ function New-PurviewCollection {
         [string]$BaseUri
     )
 
-    $systemInternalName = $CollectionName.Replace(" ","")
+    $systemInternalName = [regex]::Replace($CollectionName, "[^a-zA-Z0-9]", "")
 
     $url = "$($BaseUri)/account/collections/$($systemInternalName)?api-version=$ApiVersion"
+
+    Write-Host "Pushing to" $url
 
     $json = @{
         "name" = "systemInternalName"
