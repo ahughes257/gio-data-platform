@@ -79,7 +79,7 @@ function New-PurviewCollection {
         [Parameter(Mandatory = $true)]
         [string]$CollectionName,
 
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $false)]
         [string]$ParentCollectionName,
 
         [Parameter(Mandatory = $true)]
