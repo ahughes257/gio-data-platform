@@ -103,6 +103,14 @@ function New-PurviewCollection {
         }
         "friendlyName" = $CollectionName
     }
+
+    if ($ParentCollectionName -eq $null)
+    {
+        $json = @{
+            "name" = "systemInternalName"
+            "friendlyName" = $CollectionName
+        }
+    }
      
     Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'PUT' -Body $json
 }
