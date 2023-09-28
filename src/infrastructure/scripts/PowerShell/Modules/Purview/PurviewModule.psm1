@@ -220,9 +220,11 @@ function Add-PurviewPolicyRole {
            
         if ($dnfCondition) 
         {           
+            Write-Host "Adding Group Id $GroupId permission for $RoleName"
             $dnfCondition.dnfCondition[0][1].attributeValueIncludedIn += $GroupId
         } else {
-            #CREATE THE DNF RULE
+            Write-Host "Creating DNF Rule for purviewmetadatarole_builtin_$($RoleName):$CollectionName"
+            #CREATE THE DNF RULE for
             $newCondition = [PSCustomObject]@{
                 attributeName = "derived.purview.permission"
                 attributeValueIncludes = "purviewmetadatarole_builtin_$($RoleName):$CollectionName"
