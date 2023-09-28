@@ -224,7 +224,7 @@ function Add-PurviewPolicyRole {
         {           
             Write-Host "dnf retrieve has id of $dnfCondition.id"
             Write-Host "Adding Group Id $GroupId permission for $RoleName"
-            Write-Host $dnfCondition.dnfCondition[0]
+            Write-Host "First DNF" $dnfCondition.dnfCondition[0][1]
             $dnfCondition.dnfCondition[0][1].attributeValueIncludedIn += $GroupId
         } else {
             Write-Host "Creating DNF Rule for purviewmetadatarole_builtin_$($RoleName):$CollectionName"
