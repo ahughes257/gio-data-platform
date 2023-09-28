@@ -223,13 +223,14 @@ function Add-PurviewPolicyRole {
         if ($dnfCondition) 
         {           
             Write-Host "dnf retrieve has id of $dnfCondition.id"
-            for($i=0; $i -lt ($dnfCondition.dnfCondition[0].length; $i++) {
-                if($dnfCondition.dnfCondition[0][i].attributeValueIncludedIn -ne $null)
+            for($i=0; $i -lt $dnfCondition.dnfCondition[0].length; $i++) 
+            {
+                if ($null -ne $dnfCondition.dnfCondition[0][$i].attributeValueIncludedIn)
                 {
                     Write-Host "Found the group attribute in position $i"
                     $dnfCondition.dnfCondition[0][$i].attributeValueIncludedIn += $GroupId
                 }
-            }           
+            }   
             
         } else {
             Write-Host "Creating DNF Rule for purviewmetadatarole_builtin_$($RoleName):$CollectionName"
