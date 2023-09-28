@@ -222,6 +222,7 @@ function Add-PurviewPolicyRole {
         
         if ($dnfCondition) 
         {           
+            Write-Host "dnf retrieve has id of $dnfCondition.id"
             Write-Host "Adding Group Id $GroupId permission for $RoleName"
             $dnfCondition.dnfCondition[0][1].attributeValueIncludedIn += $GroupId
         } else {
