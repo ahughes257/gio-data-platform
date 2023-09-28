@@ -217,7 +217,9 @@ function Add-PurviewPolicyRole {
     if ($permissionRule) {
         # Check if the permission rule contains an entry with the specified fromRule value
         $dnfCondition = $updatedPolicy.properties.attributeRules | Where-Object { $_.id -eq "purviewmetadatarole_builtin_$($RoleName):$CollectionName" }
-           
+
+        Write-Host "DNF Condition is $dnfCondition"
+        
         if ($dnfCondition) 
         {           
             Write-Host "Adding Group Id $GroupId permission for $RoleName"
