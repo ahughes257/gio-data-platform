@@ -372,6 +372,8 @@ function Set-Glossary
         contacts = $contacts
     } | ConvertTo-Json
 
+    Write-Host $json
+
     $url = "$($BaseUri)/catalog/api/atlas/v2/glossary"
          
     Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'POST' -Body $json
