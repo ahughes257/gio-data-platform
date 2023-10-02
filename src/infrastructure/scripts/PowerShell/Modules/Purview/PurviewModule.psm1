@@ -376,7 +376,7 @@ function Set-Glossary
         Write-Host "Creating Glossary: $glossaryName"
         $json = @{
             "name" = "$glossaryName"
-            "longDescription" = "$longDescription"
+            "longDescription" = "$glossaryDescription"
             "contacts" = $contacts
         }
     
@@ -389,7 +389,7 @@ function Set-Glossary
         Write-Host "Updating existing Glossary: $glossaryName"
         $json = @{
             "name" = "$glossaryName"
-            "longDescription" = "$longDescription"
+            "longDescription" = "$glossaryDescription"
             "contacts" = $contacts
         }
     
