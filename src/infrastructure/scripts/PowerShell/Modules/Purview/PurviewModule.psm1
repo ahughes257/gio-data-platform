@@ -328,3 +328,51 @@ function Get-Classification {
      
     Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'GET' -Body $json
 }
+
+
+function Set-Glossary
+{
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$AccessToken,
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUri,
+        [Parameter(Mandatory = $true)]
+        [string]$glossaryName,
+        [Parameter(Mandatory = $true)]
+        [string]$glossaryDescription,
+        [Parameter(Mandatory = $true)]
+        [array]$experts,
+        [Parameter(Mandatory = $true)]
+        [array]$stewards
+    )
+
+    $contacts = @{
+        Expert = @()
+        Steward = @()
+    }
+
+    foreach ($expert in $experts) {
+        $contacts.Expert += @{
+            id = $expert.id
+            info = $expert.info
+        }
+    }
+
+    foreach ($steward in $stewards) {
+        $contacts.Steward += @{
+            id = $steward.id
+            info = $steward.info
+        }
+    }
+
+    $json = @{
+        name = $glossaryName
+        longDescription = $glossaryDescription
+        contacts = $contacts
+    } | ConvertTo-Json
+
+    $url = "$($BaseUri)/catalog/api/atlas/v2/glossary"
+         
+    Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'POST' -Body $json
+}
