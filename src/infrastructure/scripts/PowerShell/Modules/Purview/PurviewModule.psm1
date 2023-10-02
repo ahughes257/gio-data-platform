@@ -370,7 +370,7 @@ function Set-Glossary
         name = $glossaryName
         longDescription = $glossaryDescription
         contacts = $contacts
-    } | ConvertTo-Json
+    } | ConvertTo-Json -Depth 100
 
     Write-Host $json
 
