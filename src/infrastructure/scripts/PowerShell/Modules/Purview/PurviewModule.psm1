@@ -26,6 +26,7 @@ function Invoke-PurviewRestMethod {
 
     if ($Body) {
         $requestParams.Body = $Body | ConvertTo-Json -Depth 100
+        Write-Host  "Sending the JSON " $requestParams.Body
     }
 
     Invoke-RestMethod @requestParams
@@ -366,15 +367,52 @@ function Set-Glossary
         }
     }
 
-    $json = @{
-        name = $glossaryName
-        longDescription = $glossaryDescription
-        contacts = $contacts
-    } | ConvertTo-Json -Depth 100
+    $allGlossaries = Get-Glossaries -BaseUri $BaseUri -GlossaryName $glossary.Name -AccessToken $AccessToken 
+    
+    $existingGlossary = $allGlossaries | Where-Object { $_.name -eq $glossaryName }
 
-    Write-Host $json
+    if($null -eq $existingGlossary)
+    {
+        Write-Host "Creating Glossary: $glossaryName"
+        $json = @{
+            "name" = "$glossaryName"
+            "longDescription" = "$longDescription"
+            "contacts" = $contacts
+        }
+    
+        $url = "$($BaseUri)/catalog/api/atlas/v2/glossary"
+             
+        Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'POST' -Body $json
+    }
+    else
+    {
+        Write-Host "Updating existing Glossary: $glossaryName"
+        $json = @{
+            "name" = "$glossaryName"
+            "longDescription" = "$longDescription"
+            "contacts" = $contacts
+        }
+    
+        $url = "$($BaseUri)/catalog/api/atlas/v2/glossary/" + $existingGlossary.guid
+             
+        Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'PUT' -Body $json
+    }    
+}
+
+function Get-Glossaries {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$AccessToken,
+
+        [Parameter(Mandatory = $true)]
+        [string]$GlossaryName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUri
+    )
 
     $url = "$($BaseUri)/catalog/api/atlas/v2/glossary"
-         
-    Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'POST' -Body $json
+     
+    Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'GET' -Body $json
 }

@@ -46,10 +46,7 @@ foreach ($file in $jsonFiles) {
           Write-Host "Updating Policy for $permissionGroup"
           #You need to get the policy each time to avoid 409 conflicts as the policy is versioned
           $policy = Get-PurviewPolicyByCollectionName -AccessToken $AccessToken -CollectionName $shortname -ApiVersion '2021-07-01-preview' -BaseUri $baseUrl
-          $policyId = $policy.values[0].id
-          
-          #$groupObjectId = Get-AdGroupObjectId -GroupName $permissionGroup
-
+         
           #Assign a group to a role
           Add-PurviewPolicyRole -AccessToken $AccessToken -BaseUri $baseUrl -ApiVersion '2021-07-01-preview' -Policy $policy.values[0] -RoleName $permission.Group -GroupId $permissionGroup -CollectionName $shortname
           Write-Host "Added group with id $permissionGroup to the $permissionGroup role"
