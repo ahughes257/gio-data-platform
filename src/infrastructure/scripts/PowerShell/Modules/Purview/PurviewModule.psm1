@@ -416,3 +416,43 @@ function Get-Glossaries {
      
     Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'GET' -Body $json
 }
+
+
+function Set-TermTemplate
+{
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$AccessToken,
+
+        [Parameter(Mandatory = $true)]
+        [psobject]$templateDefinitions,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUri
+    )
+
+    $url = "$($BaseUri)/catalog/api/atlas/v2/types/typedefs"
+     
+    Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'PUT' -Body $json
+}
+
+
+function Get-TermTemplateByName
+{
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$AccessToken,
+
+        [Parameter(Mandatory = $true)]
+        [string]$termTemplateName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUri
+    )
+
+    $url = "$($BaseUri)/datamap/api/types/termtemplatedef/name/$termTemplateName?api-version=2023-09-01"
+     
+    Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'GET'
+}
