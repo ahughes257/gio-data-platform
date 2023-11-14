@@ -3,10 +3,7 @@ param (
     [string]$AccountName,
 
     [Parameter(Mandatory = $true)]
-    [string]$ConfigFilePath,
-
-    [Parameter(Mandatory = $true)]
-    [string]$Environment
+    [string]$ConfigFilePath
 )
 
 Import-Module $PSScriptRoot/../../Modules/Purview/PurviewModule.psm1
@@ -17,21 +14,8 @@ $AccessToken = (Get-AzAccessToken -Resource "https://purview.azure.net").Token
 
 foreach ($file in $jsonFiles) {
 
-  $config = Get-Content $file.FullName | ConvertFrom-Json
+  $config = Get-Content $file.FullName  | ConvertFrom-Json
 
-  Write-Host $config
+  Set-TermTemplate -AccessToken $AccessToken -BaseUri $baseUrl -templateDefinition $config      
 
-  foreach ($classification in $config.Classifications) 
-  {      
-      Write-Host $classification.Name "----------" $classification.Description
-
-      try 
-      {
-         $existingClassification = Get-Classification -AccessToken $AccessToken -ClassificationName $classification.Name -BaseUri $baseUrl
-      }
-      catch [System.Net.WebException] #Not found
-      {
-         New-Classification -AccessToken $AccessToken -ClassificationName $classification.Name -ClassificationDescription $classification.Description -ApiVersion '2019-11-01-preview' -BaseUri $baseUrl
-      }         
-  }
 }

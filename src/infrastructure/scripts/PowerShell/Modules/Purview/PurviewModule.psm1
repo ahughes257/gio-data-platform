@@ -426,15 +426,26 @@ function Set-TermTemplate
         [string]$AccessToken,
 
         [Parameter(Mandatory = $true)]
-        [psobject]$templateDefinitions,
+        [psobject]$templateDefinition,
 
         [Parameter(Mandatory = $true)]
         [string]$BaseUri
     )
 
     $url = "$($BaseUri)/catalog/api/atlas/v2/types/typedefs"
-     
-    Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'PUT' -Body $json
+    
+    foreach($item in $templateDefinition.termTemplateDefs)
+    {
+        $existing = Get-TermTemplateByName -AccessToken $AccessToken -BaseUri $BaseUri -termTemplateName $item.name
+
+        if($null -eq $existing)
+        {
+            Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'POST' -Body $templateDefinition
+        }
+        else {
+            Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'PUT' -Body $templateDefinition
+        }
+    }
 }
 
 
@@ -452,7 +463,8 @@ function Get-TermTemplateByName
         [string]$BaseUri
     )
 
-    $url = "$($BaseUri)/datamap/api/types/termtemplatedef/name/$termTemplateName?api-version=2023-09-01"
+    $url = "$BaseUri/datamap/api/types/termtemplatedef/name/$termTemplateName"
+    $url += "?api-version=2023-09-01"
      
     Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'GET'
 }
