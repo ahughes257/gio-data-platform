@@ -3,29 +3,22 @@ param (
     [string]$AccountName,
 
     [Parameter(Mandatory = $true)]
-    [string]$ConfigFilePath,
-
-    [Parameter(Mandatory = $true)]
-    [string]$Environment
+    [string]$ConfigFilePath
 )
 
-Import-Module $PSScriptRoot/../../Modules/Purview/PurviewModule.psm1
+Import-Module $PSScriptRoot/../../Modules/Purview/PurviewModule.psm1 -Force
 $jsonFiles = Get-ChildItem -Path $ConfigFilePath -Filter "*.json" -Recurse
 
 $baseUrl = "https://$AccountName.purview.azure.com"
+
 $AccessToken = (Get-AzAccessToken -Resource "https://purview.azure.net").Token
 
-foreach ($file in $jsonFiles) {
-  Write-Host $file.FullName
+foreach ($file in $jsonFiles) 
+{
   $config = Get-Content $file.FullName | ConvertFrom-Json
 
-  Write-Host $config
-
   foreach ($glossary in $config.Glossaries) 
-  {      
-      Write-Host $glossary.Name "----------" $glossary.Description
-   
-        # Define experts and stewards as arrays of objects
+  {  
         $experts = @()
         $stewards = @()
 
@@ -46,6 +39,11 @@ foreach ($file in $jsonFiles) {
         }
 
         Set-Glossary -accessToken $accessToken -glossaryName $glossary.Name -glossaryDescription $glossary.Description -experts $experts -stewards $stewards -BaseUri $baseUrl
+
+        foreach($term in $glossary.Terms)
+        {
+            Set-GlossaryTerm -accessToken $accessToken -glossaryName $glossary.Name -BaseUri $baseUrl -TermObject $term
+        } 
 
   }
 }

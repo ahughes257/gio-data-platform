@@ -9,7 +9,9 @@ function Invoke-PurviewRestMethod {
 
         [string]$Method = 'GET',
        
-        [object]$Body
+        [object]$Body,
+
+        [bool]$GenerateArrayBody = $false
     )
 
     $headers = @{
@@ -25,7 +27,14 @@ function Invoke-PurviewRestMethod {
     }
 
     if ($Body) {
-        $requestParams.Body = $Body | ConvertTo-Json -Depth 100
+        if($GenerateArrayBody)
+        {
+            $requestParams.Body = ConvertTo-Json @($Body) -Depth 100
+        }
+        else
+        {
+            $requestParams.Body = $Body | ConvertTo-Json -Depth 100           
+        }       
         Write-Host  "Sending the JSON " $requestParams.Body
     }
 
@@ -272,10 +281,6 @@ function Add-PurviewPolicyRole {
         Write-Host "No attribute rule with ID 'permission:$CollectionName' exists."
     }
        
-    #$output =  $updatedPolicy | ConvertTo-Json -Depth 100
-
-    #Write-Host $output
-
     Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'PUT' -Body $updatedPolicy
 }
 
@@ -396,7 +401,8 @@ function Set-Glossary
         $url = "$($BaseUri)/catalog/api/atlas/v2/glossary/" + $existingGlossary.guid
              
         Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'PUT' -Body $json
-    }    
+    }   
+    
 }
 
 function Get-Glossaries {
@@ -417,6 +423,60 @@ function Get-Glossaries {
     Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'GET' -Body $json
 }
 
+function Set-GlossaryTerm {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$AccessToken,
+
+        [Parameter(Mandatory = $true)]
+        [string]$GlossaryName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUri,
+
+        [Parameter(Mandatory = $true)]
+        [object]$TermObject
+    )
+
+    $allGlossaries = Get-Glossaries -BaseUri $BaseUri -GlossaryName $GlossaryName -AccessToken $AccessToken 
+    $existingGlossary = $allGlossaries | Where-Object { $_.name -eq $GlossaryName }
+
+    $existingTerms = Get-GlossaryTerms -GlossaryId $existingGlossary.guid -BaseUri $BaseUri -AccessToken $AccessToken 
+    $existingTerm = $existingTerms | Where-Object { $_.name -eq $TermObject.name }
+
+    ##Tokenise the value at Runtime for the Token
+    $TermObject.anchor.glossaryGuid = $existingGlossary.guid 
+
+    if($existingTerm)
+    {  
+        $url = "$($BaseUri)/catalog/api/atlas/v2/glossary/term/$($existingTerm.guid)?includeTermHierarchy=true" 
+        Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'PUT' -Body $TermObject
+    }
+    else 
+    {        
+         # For each term map the parent guid and split into separate requests so we can verify each one before creation              
+        $Result = @($TermObject)
+        $url = "$($BaseUri)/catalog/api/atlas/v2/glossary/terms?includeTermHierarchy=true"        
+        Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'POST' -Body $Result -GenerateArrayBody $true
+    }   
+}
+
+function Get-GlossaryTerms {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$AccessToken,
+
+        [Parameter(Mandatory = $true)]
+        [string]$GlossaryId,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUri
+    )
+    $url = "$($BaseUri)/catalog/api/glossary/$GlossaryId/terms?limit=10000&offset=0&includeTermHierarchy=true&api-version=2021-05-01-preview"     
+    Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url
+}
 
 function Set-TermTemplate
 {
@@ -447,7 +507,6 @@ function Set-TermTemplate
         }
     }
 }
-
 
 function Get-TermTemplateByName
 {
