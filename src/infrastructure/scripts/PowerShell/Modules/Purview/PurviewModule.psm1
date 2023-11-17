@@ -527,3 +527,24 @@ function Get-TermTemplateByName
      
     Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'GET'
 }
+
+
+function Set-Workflow
+{
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$AccessToken,
+
+        [Parameter(Mandatory = $true)]
+        [object]$WorkFlow,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUri
+    )
+
+    $url = "$BaseUri/workflow/workflows/$($workflow.workFlowId)"
+    $url += "?api-version=2021-03-01"
+     
+    Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'PUT' -Body $WorkFlow
+}
