@@ -436,17 +436,18 @@ function Set-GlossaryTerm {
         [string]$BaseUri,
 
         [Parameter(Mandatory = $true)]
-        [object]$TermObject
+        [object]$TermObject,
+
+        [Parameter(Mandatory = $true)]
+        [string]$GlossaryId
+        
     )
 
-    $allGlossaries = Get-Glossaries -BaseUri $BaseUri -GlossaryName $GlossaryName -AccessToken $AccessToken 
-    $existingGlossary = $allGlossaries | Where-Object { $_.name -eq $GlossaryName }
-
-    $existingTerms = Get-GlossaryTerms -GlossaryId $existingGlossary.guid -BaseUri $BaseUri -AccessToken $AccessToken 
+    $existingTerms = Get-GlossaryTerms -GlossaryId $GlossaryId -BaseUri $BaseUri -AccessToken $AccessToken 
     $existingTerm = $existingTerms | Where-Object { $_.name -eq $TermObject.name }
 
     ##Tokenise the value at Runtime for the Token
-    $TermObject.anchor.glossaryGuid = $existingGlossary.guid 
+    $TermObject.anchor.glossaryGuid = $GlossaryId
 
     if($existingTerm)
     {  
@@ -540,11 +541,23 @@ function Set-Workflow
         [object]$WorkFlow,
 
         [Parameter(Mandatory = $true)]
-        [string]$BaseUri
+        [string]$BaseUri,
+
+        [Parameter(Mandatory = $false)]
+        [string]$GlossaryId
+
     )
 
     $url = "$BaseUri/workflow/workflows/$($workflow.workFlowId)"
-    $url += "?api-version=2021-03-01"
+    $url += "?api-version=2021-03-01"    
      
+    if ($null -ne $WorkFlow.triggers)
+    {
+        foreach($trigger in $WorkFlow.triggers)
+        {
+            $trigger.underGlossaryHierarchy = "/glossaries/$GlossaryId"
+        }
+    }
+    
     Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'PUT' -Body $WorkFlow
 }
