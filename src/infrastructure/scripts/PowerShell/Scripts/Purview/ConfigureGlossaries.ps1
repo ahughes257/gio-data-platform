@@ -44,7 +44,7 @@ foreach ($file in $jsonFiles)
 
         $id = Set-Glossary -accessToken $accessToken -glossaryName $glossary.Name -glossaryDescription $glossary.Description -experts $experts -stewards $stewards -BaseUri $baseUrl
       
-        Write-Host "Settomg GlossaryTerms"
+        Write-Host "Setting GlossaryTerms"
         foreach($term in $glossary.Terms)
         {
             Set-GlossaryTerm -accessToken $accessToken -glossaryName $glossary.Name -BaseUri $baseUrl -TermObject $term -GlossaryId $id.guid

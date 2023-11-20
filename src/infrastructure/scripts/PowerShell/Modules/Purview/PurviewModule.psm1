@@ -11,7 +11,9 @@ function Invoke-PurviewRestMethod {
        
         [object]$Body,
 
-        [bool]$GenerateArrayBody = $false
+        [bool]$GenerateArrayBody = $false,
+
+        [int]$MaxRetryAttempts = 3
     )
 
     $headers = @{
@@ -27,19 +29,40 @@ function Invoke-PurviewRestMethod {
     }
 
     if ($Body) {
-        if($GenerateArrayBody)
-        {
+        if ($GenerateArrayBody) {
             $requestParams.Body = ConvertTo-Json @($Body) -Depth 100
         }
-        else
-        {
+        else {
             $requestParams.Body = $Body | ConvertTo-Json -Depth 100           
         }       
         Write-Host  "Sending the JSON " $requestParams.Body
     }
 
-    Invoke-RestMethod @requestParams
+    if ($Method -eq 'GET') {
+        $retryCount = 0
+        do {
+            try {
+                $response = Invoke-RestMethod @requestParams
+                return $response
+            }
+            catch {
+                $retryCount++
+                if ($retryCount -lt $MaxRetryAttempts) {
+                    Write-Host "Retry attempt $retryCount failed. Retrying..."
+                    Start-Sleep -Seconds 5 # You can adjust the sleep duration between retries
+                }
+                else {
+                    throw "Maximum retry attempts reached. Error: $_"
+                }
+            }
+        } while ($retryCount -lt $MaxRetryAttempts)
+    }
+    else {
+        # For non-GET requests, just invoke the RestMethod without retry
+        Invoke-RestMethod @requestParams
+    }
 }
+
 
 function Get-PurviewCollections {
     [CmdletBinding()]
