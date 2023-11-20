@@ -446,6 +446,8 @@ function Set-GlossaryTerm {
     $existingTerms = Get-GlossaryTerms -GlossaryId $GlossaryId -BaseUri $BaseUri -AccessToken $AccessToken 
     $existingTerm = $existingTerms | Where-Object { $_.name -eq $TermObject.name }
 
+
+    Write-Host "Upserting Glossary Term"
     ##Tokenise the value at Runtime for the Token
     $TermObject.anchor.glossaryGuid = $GlossaryId
 
@@ -475,6 +477,8 @@ function Get-GlossaryTerms {
         [Parameter(Mandatory = $true)]
         [string]$BaseUri
     )
+
+    Write-Host "Retrieving Existing Glossary Terms"
     $url = "$($BaseUri)/catalog/api/glossary/$GlossaryId/terms?limit=10000&offset=0&includeTermHierarchy=true&api-version=2021-05-01-preview"     
     Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url
 }
