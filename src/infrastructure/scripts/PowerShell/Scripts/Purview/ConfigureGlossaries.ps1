@@ -16,7 +16,6 @@ $baseUrl = "https://$AccountName.purview.azure.com"
 
 $AccessToken = (Get-AzAccessToken -Resource "https://purview.azure.net").Token
 
-
 foreach ($file in $jsonFiles) 
 {
   $config = Get-Content $file.FullName | ConvertFrom-Json
@@ -43,17 +42,18 @@ foreach ($file in $jsonFiles)
         }
 
         $id = Set-Glossary -accessToken $accessToken -glossaryName $glossary.Name -glossaryDescription $glossary.Description -experts $experts -stewards $stewards -BaseUri $baseUrl
+        
         Write-Host "Glossary Upserted with ID $($id.guid)"
-
-        Write-Host "Setting GlossaryTerms"
+       
         foreach($term in $glossary.Terms)
         {
+            Write-Host "Setting GlossaryTerms"
             Set-GlossaryTerm -accessToken $accessToken -glossaryName $glossary.Name -BaseUri $baseUrl -TermObject $term -GlossaryId $id.guid
         } 
-
-        Write-Host "Setting Glossary Workflows"
+       
         foreach($workflow in $glossary.WorkFlows)
         {
+            Write-Host "Setting Glossary Workflows"
             Set-Workflow -AccessToken $AccessToken -WorkFlow $workflow -BaseUri $baseUrl -GlossaryId $id.guid
         }         
 
