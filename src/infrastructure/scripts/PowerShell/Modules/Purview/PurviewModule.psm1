@@ -1,3 +1,28 @@
+function Out-FileWithDirectory {
+    param (
+        [string]$FilePath,
+        [object]$Content,
+        [string]$Encoding = "UTF8",
+        [switch]$ConvertToJson
+    )
+
+    # Extract the directory path from the file path
+    $directoryPath = [System.IO.Path]::GetDirectoryName($FilePath)
+
+    # Create the directory if it doesn't exist
+    New-Item -Path $directoryPath -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
+
+    if ($ConvertToJson)
+    {      
+        $Content = $Content | ConvertTo-Json -Depth 100
+        $Content | Out-File -FilePath $FilePath -Encoding $Encoding
+    }
+    else 
+    {
+        $Content | Out-File -FilePath $FilePath -Encoding $Encoding        
+    }
+}
+
 function Invoke-PurviewRestMethod {
     [CmdletBinding()]
     param (
@@ -146,6 +171,27 @@ function New-PurviewCollection {
     }
      
     Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'PUT' -Body $json
+}
+
+function Set-Collection{
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$AccessToken,
+
+        [Parameter(Mandatory = $true)]
+        [object]$Collection,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ApiVersion,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUri
+    )
+
+    $url = "$($BaseUri)/account/collections/$($Collection.name)?api-version=$ApiVersion"
+
+    Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'PUT' -Body $Collection | ConvertTo-Json
 }
 
 function Get-PurviewPolicies {
