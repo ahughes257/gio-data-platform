@@ -39,7 +39,7 @@ extends:
       - /vars/common.yaml@GIO_DATA_PLATFORM
       - /vars/{environment}.uksouth.yaml@GIO_DATA_PLATFORM
     environments:
-      - name: 'DP_TST'
+      - name: 'DP_DEV1'
         azureRegions:
           primary: uksouth
         developmentEnvironment: true
