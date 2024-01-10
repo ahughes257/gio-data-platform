@@ -18,17 +18,17 @@ foreach ($file in $jsonFiles) {
   Write-Host $file.FullName
   $config = Get-Content $file.FullName 
 
-  foreach ($collection in $config.Collections) 
+  foreach ($collection in $config.collections) 
   {
-      foreach ($permission in $collection.Permissions) 
+      foreach ($permission in $collection.permissions) 
       {      
-        foreach($permissionGroup in $permission.GroupNames)   
+        foreach($permissionGroup in $permission.groupNames)   
         {
           Write-Host "Updating Policy for $permissionGroup"
-          $policy = Get-PurviewPolicyByCollectionName -AccessToken $AccessToken -CollectionName $collection.Name -ApiVersion '2021-07-01-preview' -BaseUri $baseUrl
+          $policy = Get-PurviewPolicyByCollectionName -AccessToken $AccessToken -CollectionName $collection.name -ApiVersion '2021-07-01-preview' -BaseUri $baseUrl
          
           #Assign a group to a role
-          Add-PurviewPolicyRole -AccessToken $AccessToken -BaseUri $baseUrl -ApiVersion '2021-07-01-preview' -Policy $policy.values[0] -RoleName $permission.Group -GroupId $permissionGroup -CollectionName $collection.Name
+          Add-PurviewPolicyRole -AccessToken $AccessToken -BaseUri $baseUrl -ApiVersion '2021-07-01-preview' -Policy $policy.values[0] -RoleName $permission.group -GroupId $permissionGroup -CollectionName $collection.name
           Write-Host "Added group with id $permissionGroup to the $permissionGroup role"
         }
       }
