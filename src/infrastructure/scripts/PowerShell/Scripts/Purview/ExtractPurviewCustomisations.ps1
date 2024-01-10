@@ -32,13 +32,6 @@ if($true -ne $exportConfig.IgnoreSystemGeneratedFieldsOnImport)
     }
 }
 
-Out-FileWithDirectory -FilePath $FolderPath\Classifications\classifications.json -Encoding UTF8 -Content $collections.value -ConvertToJson
-
-#$fileContent = Get-Content -Path  $FolderPath\Classifications\classifications.json | ConvertFrom-Json
-
-#foreach($collection in $fileContent)
-#{
-#    Set-Collection -AccessToken $AccessToken -Collection $collection -ApiVersion 2019-11-01-preview -BaseUri $baseUrl 
-#}
+Out-FileWithDirectory -FilePath $FolderPath\Collections\collections.json -Encoding UTF8 -Content $collections.value -ConvertToJson
 
 #Glossaries

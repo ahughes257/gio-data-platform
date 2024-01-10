@@ -3,10 +3,7 @@ param (
     [string]$AccountName,
 
     [Parameter(Mandatory = $true)]
-    [string]$ConfigFilePath,
-    
-    [Parameter(Mandatory = $true)]
-    [string]$Environment
+    [string]$ConfigFilePath
 )
 
 Import-Module $PSScriptRoot/../../Modules/Purview/PurviewModule.psm1 -Force

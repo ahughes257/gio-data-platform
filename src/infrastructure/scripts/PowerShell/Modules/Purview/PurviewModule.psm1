@@ -88,7 +88,6 @@ function Invoke-PurviewRestMethod {
     }
 }
 
-
 function Get-PurviewCollections {
     [CmdletBinding()]
     param (
