@@ -6,7 +6,8 @@ param (
     [string]$FolderPath,
 
     [Parameter(Mandatory = $true)]
-    [string]$ExportSettings    
+    [string]$ExportSettings 
+
 )
 
 Import-Module $PSScriptRoot/../../Modules/Purview/PurviewModule.psm1
@@ -34,4 +35,20 @@ if($true -ne $exportConfig.IgnoreSystemGeneratedFieldsOnImport)
 
 Out-FileWithDirectory -FilePath $FolderPath\Collections\collections.json -Encoding UTF8 -Content $collections.value -ConvertToJson
 
+
 #Glossaries
+
+
+#Git Commit
+
+$repoName = $(Build.SourceBranch)
+$repoName = $repoName.Replace("refs/heads/","")
+
+git checkout $repoName
+
+git config --global user.email $(Build.QueuedBy)
+git config --global user.name $(Build.QueuedBy)
+git add --all
+git commit -m "Purview Extraction Files"
+
+git -c http.extraheader="AUTHORIZATION: bearer $(System.AccessToken)" push origin
