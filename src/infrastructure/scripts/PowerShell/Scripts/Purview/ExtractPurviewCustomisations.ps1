@@ -6,7 +6,16 @@ param (
     [string]$FolderPath,
 
     [Parameter(Mandatory = $true)]
-    [string]$ExportSettings 
+    [string]$ExportSettings,
+    
+    [Parameter(Mandatory = $true)]
+    [string]$AdoAccessToken,
+
+    [Parameter(Mandatory = $true)]
+    [string]$SourceBranch,
+    
+    [Parameter(Mandatory = $true)]
+    [string]$QueuedBy
 
 )
 
@@ -19,6 +28,8 @@ $AccessToken = (Get-AzAccessToken -Resource "https://purview.azure.net").Token
 
 #Collections
 $collections = Get-PurviewCollections -AccessToken $AccessToken -BaseUri $baseUrl -ApiVersion 2019-11-01-preview 
+
+Write-Host "Retrieved $($collections.value.Length) Collections"
 
 if($true -ne $exportConfig.IncludeRootCollection)
 {
@@ -41,14 +52,14 @@ Out-FileWithDirectory -FilePath $FolderPath\Collections\collections.json -Encodi
 
 #Git Commit
 
-$repoName = $(Build.SourceBranch)
+$repoName = "$SourceBranch"
 $repoName = $repoName.Replace("refs/heads/","")
 
 git checkout $repoName
 
-git config --global user.email $(Build.QueuedBy)
-git config --global user.name $(Build.QueuedBy)
+git config --global user.email "$QueuedBy"
+git config --global user.name "$QueuedBy"
 git add --all
 git commit -m "Purview Extraction Files"
 
-git -c http.extraheader="AUTHORIZATION: bearer $(System.AccessToken)" push origin
+git -c http.extraheader="AUTHORIZATION: bearer $($AdoAccessToken)" push origin
