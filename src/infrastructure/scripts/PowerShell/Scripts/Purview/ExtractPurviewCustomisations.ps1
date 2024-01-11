@@ -49,17 +49,18 @@ Out-FileWithDirectory -FilePath $FolderPath\Collections\collections.json -Encodi
 
 #Glossaries
 
+Write-Host "Extracting into $($SourceBranch) under folder $($FolderPath)"
 
 #Git Commit
 
-$repoName = "$SourceBranch"
-$repoName = $repoName.Replace("refs/heads/","")
+#$repoName = "$SourceBranch"
+#$repoName = $repoName.Replace("refs/heads/","")#
 
-git checkout $repoName
+#git checkout $repoName
 
-git config --global user.email "$QueuedBy"
-git config --global user.name "$QueuedBy"
-git add --all
-git commit -m "Purview Extraction Files"
+#git config --global user.email "$QueuedBy"
+#git config --global user.name "$QueuedBy"
+#git add --all
+#git commit -m "Purview Extraction Files"#
 
-git -c http.extraheader="AUTHORIZATION: bearer $($AdoAccessToken)" push origin
+#git -c http.extraheader="AUTHORIZATION: bearer $($AdoAccessToken)" push origin
