@@ -46,7 +46,6 @@ if($true -ne $exportConfig.IgnoreSystemGeneratedFieldsOnImport)
 
 Out-FileWithDirectory -FilePath $FolderPath\Collections\collections.json -Encoding UTF8 -Content $collections.value -ConvertToJson
 
-
 #Glossaries
 
 Write-Host "Extracting into $($SourceBranch) under folder $($FolderPath)"
@@ -55,12 +54,13 @@ Write-Host "Extracting into $($SourceBranch) under folder $($FolderPath)"
 
 #$repoName = "$SourceBranch"
 #$repoName = $repoName.Replace("refs/heads/","")#
-
 #git checkout $repoName
 
-#git config --global user.email "$QueuedBy"
-#git config --global user.name "$QueuedBy"
-#git add --all
-#git commit -m "Purview Extraction Files"#
+Set-Location -Path "$FolderPath"
 
-#git -c http.extraheader="AUTHORIZATION: bearer $($AdoAccessToken)" push origin
+git config --global user.email "$QueuedBy"
+git config --global user.name "$QueuedBy"
+git add --all
+git commit -m "Purview Extraction Files"
+
+git -c http.extraheader="AUTHORIZATION: bearer $($AdoAccessToken)" push origin
