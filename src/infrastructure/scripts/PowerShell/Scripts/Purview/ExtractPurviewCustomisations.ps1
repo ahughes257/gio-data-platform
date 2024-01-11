@@ -15,7 +15,10 @@ param (
     [string]$SourceBranch,
     
     [Parameter(Mandatory = $true)]
-    [string]$QueuedBy
+    [string]$QueuedBy,
+
+    [Parameter(Mandatory = $true)]
+    [string]$RootRepoPath
 
 )
 
@@ -51,9 +54,8 @@ Out-FileWithDirectory -FilePath $FolderPath\Collections\collections.json -Encodi
 Write-Host "Extracting into $($SourceBranch) under folder $($FolderPath)"
 
 
-
 #Git Commit
-Set-Location -Path "$FolderPath"
+Set-Location -Path "$RootRepoPath"
 
 $repoName = $SourceBranch.Replace("refs/heads/","")
 
