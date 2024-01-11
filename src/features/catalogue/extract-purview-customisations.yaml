@@ -1,0 +1,53 @@
+name: $(BuildID)
+
+parameters:
+  - name: whatIf
+    displayName: PowerShell WhatIf Comparison
+    type: boolean
+    default: true
+
+  - name: deploy
+    displayName: "Deployment"
+    type: boolean
+    default: false
+
+  - name: region
+    displayName: "Region"
+    type: string
+    default: uksouth
+    values:
+      - uksouth
+
+trigger: none
+
+resources:
+  repositories:
+    - repository: PipelineCommon
+      name: DEFRA-DEVOPS-COMMON/Defra.Pipeline.Common
+      type: git
+      ref: main
+    - repository: GIO_DATA_PLATFORM
+      name: DEFRA-Common-Platform-Improvements/GIO_DATA_PLATFORM
+      type: git
+  
+extends:
+  template: /templates/pipelines/common-scripts-deploy.yaml@PipelineCommon
+  parameters:
+    additionalRepositories:
+      -  GIO_DATA_PLATFORM
+    variableFiles:
+      - /vars/common.yaml@GIO_DATA_PLATFORM
+      - /vars/{environment}.uksouth.yaml@GIO_DATA_PLATFORM
+    environments:
+      - name: 'DP_DEV'
+        azureRegions:
+          primary: uksouth
+        developmentEnvironment: true
+        deploymentBranches:
+          - '*'
+        serviceConnection: AZD-CPR-DEV1
+    scriptsList:   
+       - displayName: 'Extract Purview Customisations into local Branch'
+         scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ExtractPurviewCustomisations.ps1'
+         type: AzurePowerShell
+         scriptArguments: '-FolderPath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/$(scriptEnvironment)" -ExportSettings "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/exportConfig.json" -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV$(subscriptionNumber)$(regionNumber)01" -QueuedBy "$(Build.QueuedBy)" -SourceBranch "$(Build.SourceBranch)" -AdoAccessToken $(System.AccessToken)'
