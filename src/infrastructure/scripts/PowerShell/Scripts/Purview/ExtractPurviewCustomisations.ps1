@@ -50,13 +50,14 @@ Out-FileWithDirectory -FilePath $FolderPath\Collections\collections.json -Encodi
 
 Write-Host "Extracting into $($SourceBranch) under folder $($FolderPath)"
 
+
+
 #Git Commit
-
-#$repoName = "$SourceBranch"
-#$repoName = $repoName.Replace("refs/heads/","")#
-#git checkout $repoName
-
 Set-Location -Path "$FolderPath"
+
+$repoName = $SourceBranch.Replace("refs/heads/","")
+
+git checkout $repoName
 
 git config --global user.email "$QueuedBy"
 git config --global user.name "$QueuedBy"
