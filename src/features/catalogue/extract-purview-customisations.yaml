@@ -18,6 +18,11 @@ parameters:
     values:
       - uksouth
 
+  - name: featureBranch
+    displayName: "GIO Feature Branch to extract to"
+    type: string
+    default: feat/branchName
+
 trigger: none
 
 resources:
@@ -29,6 +34,7 @@ resources:
     - repository: GIO_DATA_PLATFORM
       name: DEFRA-Common-Platform-Improvements/GIO_DATA_PLATFORM
       type: git
+      ref: ${{ parameters.featureBranch }}
 
 variables:
   gioRepo: $[ resources.repositories.GIO_DATA_PLATFORM.ref ]
