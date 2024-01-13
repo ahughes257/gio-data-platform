@@ -18,7 +18,16 @@ param (
     [string]$QueuedBy,
 
     [Parameter(Mandatory = $true)]
-    [string]$RootRepoPath
+    [string]$RootRepoPath,
+
+    [Parameter(Mandatory = $true)]
+    [string]$TargetRepoUrl,
+
+    [Parameter(Mandatory = $true)]
+    [string]$AdoProject,
+
+    [Parameter(Mandatory = $true)]
+    [string]$AdoAccountUrl
 
 )
 
@@ -39,7 +48,7 @@ if($true -ne $exportConfig.IncludeRootCollection)
     $collections.value = $collections.value[1..($collections.value.Length - 1)]
 }
 
-if($true -ne $exportConfig.IgnoreSystemGeneratedFieldsOnImport)
+if($true -eq $exportConfig.IgnoreSystemGeneratedFields)
 {
     foreach ($obj in $collections.value) {
         $obj.PSObject.Properties.Remove("systemData")
@@ -49,21 +58,21 @@ if($true -ne $exportConfig.IgnoreSystemGeneratedFieldsOnImport)
 
 Out-FileWithDirectory -FilePath $FolderPath\Collections\collections.json -Encoding UTF8 -Content $collections.value -ConvertToJson
 
-#Glossaries
+Set-Location -Path $RootRepoPath
 
-Write-Host "Extracting into $($SourceBranch) under folder $($FolderPath)"
+$branch = $SourceBranch.Replace("refs/heads/","")
 
+git checkout -b $branch
 
-#Git Commit
-Set-Location -Path "$RootRepoPath"
-
-$repoName = $SourceBranch.Replace("refs/heads/","")
-
-git checkout $repoName
-
-git config --global user.email "$QueuedBy"
+git config --global user.email "QueuedBy"
 git config --global user.name "$QueuedBy"
 git add --all
-git commit -m "Purview Extraction Files"
+git commit -m "Updates"
+git -c http.extraheader="AUTHORIZATION: bearer $($AdoAccessToken)" push origin --set-upstream $branch
 
-git -c http.extraheader="AUTHORIZATION: bearer $($AdoAccessToken)" push origin
+#ADO Create a PR Automatically
+
+
+$env:AZURE_DEVOPS_EXT_PAT = $AdoAccessToken
+
+az repos pr create --auto-complete false --bypass-policy false --delete-source-branch true --description 'Extracted latest Changes from Purview' --source-branch $branch --squash true --target-branch main --title "PR for Purview Config" --project $AdoProject --org $AdoAccountUrl --repository "GIO_DATA_PLATFORM"
