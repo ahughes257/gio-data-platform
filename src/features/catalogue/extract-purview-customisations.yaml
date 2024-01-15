@@ -24,6 +24,7 @@ parameters:
     default: feat/branchName
 
 trigger: none
+pr: none
 
 resources:
   repositories:
