@@ -78,7 +78,7 @@ extends:
      - displayName: 'Configure Collections'
        scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureCollections.ps1'
        type: AzurePowerShell
-       scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/$(scriptEnvironment)/Collections/collections.json" -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV$(subscriptionNumber)$(regionNumber)01"'
+       scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/$(scriptEnvironment)/Collections/collections.json" -ImportConfigPath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/importConfig.json" -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV$(subscriptionNumber)$(regionNumber)01"'
      - displayName: 'Configure Collection Permissions'
        scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureCollectionPermissions.ps1'
        type: AzurePowerShell

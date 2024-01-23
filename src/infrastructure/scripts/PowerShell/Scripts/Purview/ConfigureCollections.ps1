@@ -3,14 +3,27 @@ param (
     [string]$AccountName,
 
     [Parameter(Mandatory = $true)]
-    [string]$ConfigFilePath
+    [string]$ConfigFilePath,
+
+    [Parameter(Mandatory = $true)]
+    [string]$ImportConfigPath
 )
+
+$baseUrl = "https://$AccountName.purview.azure.com"
 
 Import-Module $PSScriptRoot/../../Modules/Purview/PurviewModule.psm1
 
-$config = Get-Content -Path $ConfigFilePath | ConvertFrom-Json
+$importConfig =   Get-Content -Path $ImportConfigPath | ConvertFrom-Json 
+$config = Get-Content -Path $ConfigFilePath 
 
-$baseUrl = "https://$AccountName.purview.azure.com"
+#Replace Extracted Token
+foreach($token in $importConfig.tokens)
+{
+    if ($token.tokenName -eq "accountName")
+    {
+        $config = $config.Replace($token.tokenValue, $AccountName.ToLower())
+    }
+}
 
 foreach ($collection in $config) 
 {
