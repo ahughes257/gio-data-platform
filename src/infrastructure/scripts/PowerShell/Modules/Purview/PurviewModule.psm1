@@ -1,19 +1,49 @@
+$Global:AccessToken = (Get-AzAccessToken -Resource "https://purview.azure.net").Token
+
+function Out-FileWithDirectory {
+    param (
+        [string]$FilePath,
+        [object]$Content,
+        [string]$Encoding = "UTF8",
+        [switch]$ConvertToJson
+    )
+
+    # Extract the directory path from the file path
+    $directoryPath = [System.IO.Path]::GetDirectoryName($FilePath)
+
+    # Create the directory if it doesn't exist
+    New-Item -Path $directoryPath -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
+
+    if ($ConvertToJson)
+    {      
+        $Content = $Content | ConvertTo-Json -Depth 100
+        $Content | Out-File -FilePath $FilePath -Encoding $Encoding
+    }
+    else 
+    {
+        $Content | Out-File -FilePath $FilePath -Encoding $Encoding        
+    }
+}
+
 function Invoke-PurviewRestMethod {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true)]
-        [string]$AccessToken,
 
         [Parameter(Mandatory = $true)]
         [string]$Url,
 
         [string]$Method = 'GET',
        
-        [object]$Body
+        [object]$Body,
+
+        [bool]$GenerateArrayBody = $false,
+
+        [int]$MaxRetryAttempts = 3
     )
+    
 
     $headers = @{
-        'Authorization' = "Bearer $AccessToken"
+        'Authorization' = "Bearer $Global:AccessToken"
     }
 
     $requestParams = @{
@@ -25,17 +55,43 @@ function Invoke-PurviewRestMethod {
     }
 
     if ($Body) {
-        $requestParams.Body = $Body | ConvertTo-Json -Depth 100
+        if ($GenerateArrayBody) {
+            $requestParams.Body = ConvertTo-Json @($Body) -Depth 100
+        }
+        else {
+            $requestParams.Body = $Body | ConvertTo-Json -Depth 100           
+        }       
+        Write-Host  "Sending the JSON " $requestParams.Body
     }
 
-    Invoke-RestMethod @requestParams
+    if ($Method -eq 'GET') {
+        $retryCount = 0
+        do {
+            try {
+                $response = Invoke-RestMethod @requestParams
+                return $response
+            }
+            catch {
+                $retryCount++
+                if ($retryCount -lt $MaxRetryAttempts) {
+                    Write-Host "Retry attempt $retryCount failed. Retrying..."
+                    Start-Sleep -Seconds 5 # You can adjust the sleep duration between retries
+                }
+                else {
+                    throw "Maximum retry attempts reached. Error: $_"
+                }
+            }
+        } while ($retryCount -lt $MaxRetryAttempts)
+    }
+    else {
+        # For non-GET requests, just invoke the RestMethod without retry
+        Invoke-RestMethod @requestParams
+    }
 }
 
 function Get-PurviewCollections {
     [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)]
-        [string]$AccessToken,
+    param (       
 
         [Parameter(Mandatory = $true)]
         [string]$ApiVersion,
@@ -46,14 +102,12 @@ function Get-PurviewCollections {
 
     $url = "$($BaseUri)/account/collections?api-version=$ApiVersion"
    
-    Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url
+    Invoke-PurviewRestMethod -Url $url
 }
 
 function Get-PurviewCollectionByName {
     [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)]
-        [string]$AccessToken,
+    param (       
 
         [Parameter(Mandatory = $true)]
         [string]$ApiVersion,
@@ -67,19 +121,17 @@ function Get-PurviewCollectionByName {
 
     $url = "$($BaseUri)/account/collections/$CollectionName?api-version=$ApiVersion"
    
-    Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url
+    Invoke-PurviewRestMethod -Url $url
 }
 
 function New-PurviewCollection {
     [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)]
-        [string]$AccessToken,
+    param (       
 
         [Parameter(Mandatory = $true)]
         [string]$CollectionName,
 
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory = $false)]
         [string]$ParentCollectionName,
 
         [Parameter(Mandatory = $true)]
@@ -103,16 +155,40 @@ function New-PurviewCollection {
         }
         "friendlyName" = $CollectionName
     }
+
+    if ($ParentCollectionName -eq $null)
+    {
+        $json = @{
+            "name" = "systemInternalName"
+            "friendlyName" = $CollectionName
+        }
+    }
      
-    Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'PUT' -Body $json
+    Invoke-PurviewRestMethod -Url $url -Method 'PUT' -Body $json
+}
+
+function Set-Collection{
+    [CmdletBinding()]
+    param (
+
+        [Parameter(Mandatory = $true)]
+        [object]$Collection,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ApiVersion,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUri
+    )
+
+    $url = "$($BaseUri)/account/collections/$($Collection.name)?api-version=$ApiVersion"
+
+    Invoke-PurviewRestMethod -Url $url -Method 'PUT' -Body $Collection | ConvertTo-Json
 }
 
 function Get-PurviewPolicies {
     [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)]
-        [string]$AccessToken,
-
+    param (       
         [Parameter(Mandatory = $true)]
         [string]$ApiVersion,
 
@@ -122,14 +198,12 @@ function Get-PurviewPolicies {
 
     $url = "$($BaseUri)/policyStore/metadataPolicies?api-version=$ApiVersion"
 
-    Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url
+    Invoke-PurviewRestMethod  -Url $url
 }
 
 function Get-PurviewPolicyByCollectionName {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true)]
-        [string]$AccessToken,
 
         [Parameter(Mandatory = $true)]
         [string]$CollectionName,
@@ -143,14 +217,12 @@ function Get-PurviewPolicyByCollectionName {
 
     $url = "$($BaseUri)/policyStore/metadataPolicies?collectionName=$($CollectionName)&api-version=$ApiVersion"
 
-    Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url
+    Invoke-PurviewRestMethod -Url $url
 }
 
 function Update-PurviewPolicy {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true)]
-        [string]$AccessToken,
 
         [Parameter(Mandatory = $true)]
         [string]$PolicyId,
@@ -167,18 +239,16 @@ function Update-PurviewPolicy {
 
     $url = "$($BaseUri)/policystore/metadataPolicies/$($PolicyId)?api-version=$ApiVersion"
 
-    $policy = Get-PurviewPolicyByCollectionName -AccessToken $AccessToken -CollectionName $CollectionName -BaseUri $BaseUri -ApiVersion $ApiVersion
+    $policy = Get-PurviewPolicyByCollectionName -CollectionName $CollectionName -BaseUri $BaseUri -ApiVersion $ApiVersion
 
     $updatedPolicy = $policy.values[0]
 
-    Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'PUT' -Body $updatedPolicy
+    Invoke-PurviewRestMethod -Url $url -Method 'PUT' -Body $updatedPolicy
 }
 
 function Add-PurviewPolicyRole {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true)]
-        [string]$AccessToken,
      
         [Parameter(Mandatory = $true)]
         [string]$ApiVersion,
@@ -209,12 +279,24 @@ function Add-PurviewPolicyRole {
     if ($permissionRule) {
         # Check if the permission rule contains an entry with the specified fromRule value
         $dnfCondition = $updatedPolicy.properties.attributeRules | Where-Object { $_.id -eq "purviewmetadatarole_builtin_$($RoleName):$CollectionName" }
-           
+
+        Write-Host "DNF Condition is $dnfCondition"
+        
         if ($dnfCondition) 
         {           
-            $dnfCondition.dnfCondition[0][1].attributeValueIncludedIn += $GroupId
+            Write-Host "dnf retrieve has id of $dnfCondition.id"
+            for($i=0; $i -lt $dnfCondition.dnfCondition[0].length; $i++) 
+            {
+                if ($null -ne $dnfCondition.dnfCondition[0][$i].attributeValueIncludedIn)
+                {
+                    Write-Host "Found the group attribute in position $i"
+                    $dnfCondition.dnfCondition[0][$i].attributeValueIncludedIn += $GroupId
+                }
+            }   
+            
         } else {
-            #CREATE THE DNF RULE
+            Write-Host "Creating DNF Rule for purviewmetadatarole_builtin_$($RoleName):$CollectionName"
+            #CREATE THE DNF RULE for
             $newCondition = [PSCustomObject]@{
                 attributeName = "derived.purview.permission"
                 attributeValueIncludes = "purviewmetadatarole_builtin_$($RoleName):$CollectionName"
@@ -251,18 +333,44 @@ function Add-PurviewPolicyRole {
         Write-Host "No attribute rule with ID 'permission:$CollectionName' exists."
     }
        
-    #$output =  $updatedPolicy | ConvertTo-Json -Depth 100
-
-    #Write-Host $output
-
-    Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'PUT' -Body $updatedPolicy
+    Invoke-PurviewRestMethod -Url $url -Method 'PUT' -Body $updatedPolicy
 }
+
+function Get-PurviewClassifications {
+    [CmdletBinding()]
+    param (
+
+        [Parameter(Mandatory = $true)]
+        [string]$ApiVersion,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUri
+    )
+
+    $url = "$($BaseUri)/catalog/api/atlas/v2/types/typedefs?type=classification&includeTermTemplate=true?api-version=$ApiVersion"
+   
+    Invoke-PurviewRestMethod -Url $url
+}    
+
+function Update-PurviewClassifications {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$ApiVersion,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUri
+    )
+
+    $url = "$($BaseUri)/catalog/api/atlas/v2/types/typedefs?type=classification&includeTermTemplate=true?api-version=$ApiVersion"
+   
+    Invoke-PurviewRestMethod -Url $url
+}    
+
 
 function New-Classification {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true)]
-        [string]$AccessToken,
 
         [Parameter(Mandatory = $true)]
         [string]$ClassificationName,
@@ -288,14 +396,12 @@ function New-Classification {
         )
     }
      
-    Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'POST' -Body $json
+    Invoke-PurviewRestMethod -Url $url -Method 'POST' -Body $json
 }
 
 function Get-Classification {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true)]
-        [string]$AccessToken,
 
         [Parameter(Mandatory = $true)]
         [string]$ClassificationName,
@@ -306,5 +412,253 @@ function Get-Classification {
 
     $url = "$($BaseUri)/catalog/api/atlas/v2/types/classificationdef/name/$ClassificationName"
      
-    Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url -Method 'GET' -Body $json
+    Invoke-PurviewRestMethod -Url $url -Method 'GET' -Body $json
+}
+
+
+function Set-Glossary
+{
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUri,
+        [Parameter(Mandatory = $true)]
+        [string]$glossaryName,
+        [Parameter(Mandatory = $true)]
+        [string]$glossaryDescription,
+        [Parameter(Mandatory = $true)]
+        [array]$experts,
+        [Parameter(Mandatory = $true)]
+        [array]$stewards
+    )
+
+    $contacts = @{
+        Expert = @()
+        Steward = @()
+    }
+
+    foreach ($expert in $experts) {
+        $contacts.Expert += @{
+            id = $expert.id
+            info = $expert.info
+        }
+    }
+
+    foreach ($steward in $stewards) {
+        $contacts.Steward += @{
+            id = $steward.id
+            info = $steward.info
+        }
+    }
+
+    $allGlossaries = Get-Glossaries -BaseUri $BaseUri -GlossaryName $glossary.Name
+    
+    $existingGlossary = $allGlossaries | Where-Object { $_.name -eq $glossaryName }
+
+    if($null -eq $existingGlossary)
+    {
+        Write-Host "Creating Glossary: $glossaryName"
+        $json = @{
+            "name" = "$glossaryName"
+            "longDescription" = "$glossaryDescription"
+            "contacts" = $contacts
+        }
+    
+        $url = "$($BaseUri)/catalog/api/atlas/v2/glossary"
+             
+        Invoke-PurviewRestMethod  -Url $url -Method 'POST' -Body $json
+    }
+    else
+    {
+        Write-Host "Updating existing Glossary: $glossaryName"
+        $json = @{
+            "name" = "$glossaryName"
+            "longDescription" = "$glossaryDescription"
+            "contacts" = $contacts
+        }
+    
+        $url = "$($BaseUri)/catalog/api/atlas/v2/glossary/" + $existingGlossary.guid
+             
+        Invoke-PurviewRestMethod -Url $url -Method 'PUT' -Body $json
+    }   
+    
+}
+
+function Get-Glossaries {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$GlossaryName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUri
+    )
+
+    $url = "$($BaseUri)/catalog/api/atlas/v2/glossary"
+     
+    Invoke-PurviewRestMethod -Url $url -Method 'GET' -Body $json
+}
+
+function Set-GlossaryTerm {
+    [CmdletBinding()]
+    param (
+
+        [Parameter(Mandatory = $true)]
+        [string]$GlossaryName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUri,
+
+        [Parameter(Mandatory = $true)]
+        [object]$TermObject,
+
+        [Parameter(Mandatory = $true)]
+        [string]$GlossaryId
+        
+    )
+
+    $existingTerms = Get-GlossaryTerms -GlossaryId $GlossaryId -BaseUri $BaseUri
+    $existingTerm = $existingTerms | Where-Object { $_.name -eq $TermObject.name }
+
+
+    Write-Host "Upserting Glossary Term"
+    ##Tokenise the value at Runtime for the Token
+    $TermObject.anchor.glossaryGuid = $GlossaryId
+
+    if($existingTerm)
+    {  
+        $url = "$($BaseUri)/catalog/api/atlas/v2/glossary/term/$($existingTerm.guid)?includeTermHierarchy=true" 
+        Invoke-PurviewRestMethod  -Url $url -Method 'PUT' -Body $TermObject
+    }
+    else 
+    {        
+         # For each term map the parent guid and split into separate requests so we can verify each one before creation              
+        $Result = @($TermObject)
+        $url = "$($BaseUri)/catalog/api/atlas/v2/glossary/terms?includeTermHierarchy=true"        
+        Invoke-PurviewRestMethod -Url $url -Method 'POST' -Body $Result -GenerateArrayBody $true
+    }   
+}
+
+function Get-TypeDefinitions {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUri,
+        [Parameter(Mandatory = $true)]
+        [string]$Type            
+    )
+
+    $url = "$($BaseUri)/catalog/api/atlas/v2/types/typedefs?type=$($Type)"
+   
+    Invoke-PurviewRestMethod -Url $url
+}
+
+
+function Get-GlossaryTerms {
+    [CmdletBinding()]
+    param (
+
+        [Parameter(Mandatory = $true)]
+        [string]$GlossaryId,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUri
+    )
+
+    Write-Host "Retrieving Existing Glossary Terms"
+    $url = "$($BaseUri)/catalog/api/glossary/$GlossaryId/terms?limit=10000&offset=0&includeTermHierarchy=true&api-version=2021-05-01-preview"     
+    Invoke-PurviewRestMethod -Url $url
+}
+
+function Set-TermTemplate
+{
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [psobject]$templateDefinition,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUri
+    )
+
+    $url = "$($BaseUri)/catalog/api/atlas/v2/types/typedefs"
+    
+    foreach($item in $templateDefinition.termTemplateDefs)
+    {
+        $existing = Get-TermTemplateByName -BaseUri $BaseUri -termTemplateName $item.name
+
+        if($null -eq $existing)
+        {
+            Invoke-PurviewRestMethod -Url $url -Method 'POST' -Body $templateDefinition
+        }
+        else {
+            Invoke-PurviewRestMethod -Url $url -Method 'PUT' -Body $templateDefinition
+        }
+    }
+}
+
+function Get-TermTemplateByName
+{
+    [CmdletBinding()]
+    param (
+
+        [Parameter(Mandatory = $true)]
+        [string]$termTemplateName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUri
+    )
+
+    $url = "$BaseUri/datamap/api/types/termtemplatedef/name/$termTemplateName"
+    $url += "?api-version=2023-09-01"
+     
+    Invoke-PurviewRestMethod -Url $url -Method 'GET'
+}
+
+
+function Set-Workflow
+{
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [object]$WorkFlow,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUri,
+
+        [Parameter(Mandatory = $false)]
+        [string]$GlossaryId
+
+    )
+
+    $url = "$BaseUri/workflow/workflows/$($workflow.workFlowId)"
+    $url += "?api-version=2021-03-01"    
+     
+    if ($null -ne $WorkFlow.triggers)
+    {
+        foreach($trigger in $WorkFlow.triggers)
+        {
+            $trigger.underGlossaryHierarchy = "/glossaries/$GlossaryId"
+        }
+    }
+    
+    Invoke-PurviewRestMethod -Url $url -Method 'PUT' -Body $WorkFlow
+}
+
+function Update-TypeDefinitions
+{
+    [CmdletBinding()]
+    param (
+
+        [Parameter(Mandatory = $true)]
+        [psobject]$templateDefinition,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUri,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Verb
+    )
+
+    $url = "$($BaseUri)/catalog/api/atlas/v2/types/typedefs"
+    Invoke-PurviewRestMethod -Url $url -Method $Verb -Body $templateDefinition
 }
