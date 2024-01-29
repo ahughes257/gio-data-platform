@@ -25,6 +25,8 @@ foreach($token in $importConfig.tokens)
     }
 }
 
+$config = $config | ConvertFrom-Json
+
 foreach ($collection in $config) 
 {
     Set-Collection -Collection $collection -ApiVersion 2019-11-01-preview -BaseUri $baseUrl
