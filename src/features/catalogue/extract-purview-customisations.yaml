@@ -23,6 +23,8 @@ parameters:
     type: string
     default: feat/branchName
 
+pool: DEFRA-COMMON-windows2022-SSV3
+
 trigger: none
 pr: none
 
