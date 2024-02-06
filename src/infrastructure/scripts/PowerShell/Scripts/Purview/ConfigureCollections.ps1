@@ -22,10 +22,13 @@ foreach($token in $importConfig.tokens)
     if ($token.tokenName -eq "accountName")
     {
         $config = $config.Replace($token.tokenValue, $AccountName.ToLower())
+        Write-Host "Replaced Tokens in extract files"
     }
 }
 
 $config = $config | ConvertFrom-Json
+
+Write-Host $config
 
 foreach ($collection in $config) 
 {
