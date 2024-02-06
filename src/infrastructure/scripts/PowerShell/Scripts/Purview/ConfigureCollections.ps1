@@ -1,4 +1,4 @@
-Wparam (
+param (
     [Parameter(Mandatory = $true)]
     [string]$AccountName,
 
