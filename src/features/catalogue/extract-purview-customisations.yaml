@@ -23,6 +23,8 @@ parameters:
     type: string
     default: feat/branchName
 
+pool: DEFRA-COMMON-windows2022-SSV3
+
 trigger: none
 pr: none
 
@@ -61,4 +63,4 @@ extends:
        - displayName: 'Extract Purview Customisations into local Branch'
          scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ExtractPurviewCustomisations.ps1'
          type: AzurePowerShell
-         scriptArguments: '-TargetRepoUrl $(targetRepoUrl) -RootRepoPath "$(Build.SourcesDirectory)\GIO_DATA_PLATFORM" -FolderPath "$(Build.SourcesDirectory)\GIO_DATA_PLATFORM/src/config/catalogue/$(scriptEnvironment)" -ExportSettings "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/exportConfig.json" -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV$(subscriptionNumber)$(regionNumber)01" -QueuedBy "$(Build.QueuedBy)" -SourceBranch "$(gioRepo)" -AdoAccessToken $(System.AccessToken) -AdoProject $(System.TeamProject) -AdoAccountUrl $(System.CollectionUri)'
+         scriptArguments: '-TargetRepoUrl $(targetRepoUrl) -RootRepoPath "$(Build.SourcesDirectory)\GIO_DATA_PLATFORM" -FolderPath "$(Build.SourcesDirectory)\GIO_DATA_PLATFORM/src/config/catalogue/Extract" -ExportSettings "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/exportConfig.json" -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV$(subscriptionNumber)$(regionNumber)01" -QueuedBy "$(Build.QueuedBy)" -SourceBranch "$(gioRepo)" -AdoAccessToken $(System.AccessToken) -AdoProject $(System.TeamProject) -AdoAccountUrl $(System.CollectionUri)'
