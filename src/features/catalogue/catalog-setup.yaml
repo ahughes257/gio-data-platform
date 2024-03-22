@@ -56,12 +56,6 @@ extends:
         deploymentBranches:
           - '*'
         serviceConnection: AZD-CPR-DEV1
-      - name: 'DP_TST'
-        azureRegions:
-          primary: uksouth
-        deploymentBranches:
-          - '*'
-        serviceConnection: AZD-CPR-TST1
       - name: 'DP_PRE'
         azureRegions:
           primary: uksouth
