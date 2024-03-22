@@ -59,7 +59,6 @@ extends:
       - name: 'DP_TST'
         azureRegions:
           primary: uksouth
-        developmentEnvironment: true
         deploymentBranches:
           - '*'
         serviceConnection: AZD-CPR-TST1        
