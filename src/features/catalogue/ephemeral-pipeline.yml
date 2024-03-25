@@ -47,10 +47,11 @@ extends:
             scope: "Resource Group"
             resourceGroupName: $(resourceGroup)
             postDeployScriptsList:
-              - displayName: Add Admin Group to Root Collection Admin
+              - displayName: Add Permission to ephemeral Group
                 type: AzurePowerShell
                 inlineScript: |
                   Install-Module -Name Az.Purview -Force
                   Import-Module -Name Az.Purview
                   Add-AzPurviewAccountRootCollectionAdmin -AccountName $(ephemeralName) -ResourceGroupName $(resourceGroup) -ObjectId $(adminGroupId)
+                  New-AzRoleAssignment -ObjectId $(adminGroupId) -RoleDefinitionName "Owner" -Scope /subscriptions/$(subscriptionId)/resourceGroups/$(resourceGroup)
                   New-AzRoleAssignment -ObjectId $(adminGroupId) -RoleDefinitionName "Owner" -Scope /subscriptions/$(subscriptionId)/resourceGroups/$(resourceGroup)/providers/Microsoft.Purview/accounts/$(ephemeralName)
