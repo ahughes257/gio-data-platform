@@ -50,4 +50,6 @@ extends:
               - displayName: Add Admin Group to Root Collection Admin
                 type: AzurePowerShell
                 inlineScript: |
+                  Install-Module -Name Az.Purview -Force
+                  Import-Module -Name Az.Purview
                   Add-AzPurviewAccountRootCollectionAdmin -AccountName $(ephemeralName) -ResourceGroupName $(resourceGroup) -ObjectId $(adminGroupId)
