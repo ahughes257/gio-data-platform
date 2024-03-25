@@ -1,19 +1,48 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
+trigger: none
 
-trigger:
-- main
+parameters:
+  - name: deployToDevelopmentEnvironment
+    displayName: "Deploy from Feature Branch"
+    type: boolean
+    default: true
+  - name: workItemId
+    displayName: "The id of the work item (This will be used in the environment name)"
+    type: string
+    default: ''
 
-pool:
-  vmImage: ubuntu-latest
+resources:
+  repositories:
+    - repository: PipelineCommon
+      name: DEFRA-DEVOPS-COMMON/Defra.Pipeline.Common
+      type: git
+      ref: refs/tags/Release-v6-latest
+    - repository: GIO_DATA_PLATFORM
+      name: DEFRA-Common-Platform-Improvements/GIO_DATA_PLATFORM
+      type: git
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
-
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+extends:
+  template: /templates/pipelines/common-infrastructure-deploy.yaml@PipelineCommon
+  parameters:
+    projectName: Purview Data Catalogue
+    deployFromFeature: ${{ parameters.deployToDevelopmentEnvironment }}
+    privateAgentName: DEFRA-COMMON-windows2022-SSV3
+    environments:
+     - name: 'Ephemeral'
+       developmentEnvironment: True
+       useDevelopmentEnvironmentForValidationOnly: False
+       azureRegions:
+        primary: NorthEurope
+       serviceConnection : AZD-CPR-DEV1
+       privateAgentName: DEFRA-COMMON-windows2022-SSV3
+       variableFiles:
+     - /src/config/catalogue/vars/ephemeral.yaml@GIO_DATA_PLATFORM
+    groupedTemplates:
+      - name: Purview Ephemeral infra
+        templates:
+          - name: purview
+            isDeployToSecondaryRegions: false
+            path: src/features/catalogue/infra
+            type: bicep
+            parameterFilePath: src/features/catalogue/infra
+            scope: "Resource Group"
+            resourceGroupName: $(resourceGroup)
