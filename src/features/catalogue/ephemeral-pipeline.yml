@@ -54,5 +54,4 @@ extends:
                   Import-Module -Name Az.Purview
                   Add-AzPurviewAccountRootCollectionAdmin -AccountName $(ephemeralName) -ResourceGroupName $(resourceGroup) -ObjectId $(adminGroupId)
                   New-AzRoleAssignment -ObjectId $(adminGroupId) -RoleDefinitionName "Owner" -Scope /subscriptions/$(subscriptionId)/resourceGroups/$(resourceGroup)
-                  New-AzRoleAssignment -ObjectId $(adminGroupId) -RoleDefinitionName "Owner" -Scope /subscriptions/$(subscriptionId)/resourceGroups/$(resourceGroup)/providers/Microsoft.Purview/accounts/$(ephemeralName)
                   New-AzRoleAssignment -ObjectId $(adminGroupId) -RoleDefinitionName "Collection administrator" -Scope /subscriptions/$(subscriptionId)/resourceGroups/$(resourceGroup)/providers/Microsoft.Purview/accounts/$(ephemeralName)
