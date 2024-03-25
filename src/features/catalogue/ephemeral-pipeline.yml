@@ -46,8 +46,7 @@ extends:
             parameterFilePath: src/features/catalogue/infra
             scope: "Resource Group"
             resourceGroupName: $(resourceGroup)
-        postDeployScriptsList:
+            postDeployScriptsList:
               - displayName: Add Admin Group to Root Collection Admin
                 type: AzurePowerShell
-                inlineScript: |
-                  az purview account add-root-collection-admin --name $(ephemeralName) --object-id $(adminGroupId) --resource-group $(resourceGroup)
+                inlineScript: "az purview account add-root-collection-admin --name $(ephemeralName) --object-id $(adminGroupId) --resource-group $(resourceGroup)"
