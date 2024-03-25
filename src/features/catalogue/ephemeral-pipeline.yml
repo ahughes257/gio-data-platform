@@ -23,8 +23,6 @@ resources:
 extends:
   template: /templates/pipelines/common-infrastructure-deploy.yaml@PipelineCommon
   parameters:
-    additionalRepositories:
-      - GIO_DATA_PLATFORM
     variableFiles:
       - /src/config/catalogue/vars/ephemeral.yaml@GIO_DATA_PLATFORM
     projectName: Purview Data Catalogue
