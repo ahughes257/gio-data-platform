@@ -25,6 +25,8 @@ extends:
   parameters:
     additionalRepositories:
       - GIO_DATA_PLATFORM
+    variableFiles:
+      - /src/config/catalogue/vars/ephemeral.yaml@GIO_DATA_PLATFORM
     projectName: Purview Data Catalogue
     deployFromFeature: ${{ parameters.deployToDevelopmentEnvironment }}
     privateAgentName: DEFRA-COMMON-windows2022-SSV3
@@ -36,10 +38,8 @@ extends:
         primary: NorthEurope
        serviceConnection : AZD-CPR-DEV1
        privateAgentName: DEFRA-COMMON-windows2022-SSV3
-       variableFiles:
-        - /src/config/catalogue/vars/ephemeral.yaml@GIO_DATA_PLATFORM
     groupedTemplates:
-      - name: Purview Ephemeral infra
+      - name: Purview_Ephemeral_infra
         templates:
           - name: purview
             isDeployToSecondaryRegions: false
